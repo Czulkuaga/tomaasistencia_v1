@@ -1,0 +1,150 @@
+"use server";
+
+const BASE_URL = process.env.SERVER_URL
+
+interface FormData {
+  // id_bp?: string;
+  id_stand?: number
+  name?: string;
+  company_name?: string;
+  description?: string;
+  location?: string;
+  qr_code: string;
+  token?: string;
+  event: string;
+  // is_active: boolean;
+  is_scoring: boolean;
+}
+
+
+
+export const GETStands = async ({ token }: { token: string }) => {
+  try {
+    const response = await fetch(`${BASE_URL}/api/stands/`, {
+      method: "GET",
+      headers: {
+        "Content-type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    // console.log(response)
+    const stands = await response.json();
+
+    return stands;
+  } catch (error) {
+    console.log("Error al hacer la peticion", error);
+    return [];
+  }
+};
+
+//getpublic
+
+export const GETStandPublic = async (std: number) => {
+  try {
+    const response = await fetch(`${BASE_URL}/api/stands/public-stand-info/?std=${encodeURIComponent(std)}`, {
+      method: "GET",
+      headers: {
+        "Content-type": "application/json",
+      },
+    });
+    // console.log(response)
+    const stands = await response.json();
+    console.log("datos",stands)
+    return stands;
+  } catch (error) {
+    console.log("Error al hacer la peticion", error);
+    return [];
+  }
+};
+
+//paginacion de get 
+export const GETStandsAll = async ({  token, page = 1, pageSize = 10}: { token: string, page?: number, pageSize?: number }) => {
+  try {
+    const response = await fetch(`${BASE_URL}/api/stands/?page=${page}&page_size=${pageSize}`, {
+      method: "GET",
+      headers: {
+        "Content-type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    // console.log(response)
+    const stands = await response.json();
+
+    return stands;
+  } catch (error) {
+    console.log("Error al hacer la peticion", error);
+    return [];
+  }
+};
+
+//METODO POST
+
+export const POSTCreateStands = async (formData: FormData) => {
+  try {
+    const response = await fetch(`${BASE_URL}/api/stands/`, {
+      method: "POST",
+      headers: {
+        "Content-type": "application/json",
+        Authorization: `Bearer ${formData.token}`,
+      },
+
+      body: JSON.stringify(formData),
+    });
+
+    // console.log("Respuesta cruda de la API:", response);
+
+    const stands = await response.json();
+    console.log("datos", stands);
+    return stands;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+// METODO PUT
+
+export const PATCHStands = async (id_stand: number, token: string, updatedData: Record<string, unknown>
+) => {
+    try {
+        const response = await fetch(`${BASE_URL}/api/stands/${id_stand}/`, {
+            method: "PATCH",
+            headers: {
+                "Content-type":"application/json",
+                "Authorization": `Bearer ${token}`
+            },
+            
+            body: JSON.stringify(updatedData),
+        });
+
+
+        const stands = await response.json();
+        console.log("update de stand",stands)
+        return stands;
+
+    } catch (error) {
+        console.error("Error al actualizar el producto:", error);
+        return { error: "No se pudo actualizar el producto" };
+    }
+};
+
+//METODO DELETE
+
+export const DELETEStands = async (id_stand: number,token: string) => {
+    try {
+        const response = await fetch(`${BASE_URL}/api/stands/${id_stand}/`, {
+            method: "DELETE",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
+        });
+
+
+        const stands = await response.json();
+        return stands;
+
+    } catch (error) {
+        console.error("Error al eliminar el producto:", error);
+        return { error: "No se pudo eliminar el producto" };
+    }
+};
