@@ -11,6 +11,7 @@ import { IoQrCode } from "react-icons/io5";
 import QRCode from 'react-qr-code';
 import ModalVista from './ModalVista';
 import { IoEye } from "react-icons/io5";
+import { ModalEditActivity } from './ModalEditActivity';
 
 interface Activity {
   id_actividad: number
@@ -52,7 +53,7 @@ export default function Activity() {
   const [idevent, setIdEvent] = useState<EventItem[]>([]);
   const [idencuesta, setIdEncuesta] = useState<Survey[]>([]);
   const [isCreateProdu, setIsCreateProdu] = useState(false);
-  const [editModal, setEditModal] = useState(false);
+  const [editModal, setEditModal] = useState<boolean>(false);
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const [qrModalOpen, setQrModalOpen] = useState(false);
   const [qrValue, setQrValue] = useState<string>('');
@@ -125,7 +126,7 @@ export default function Activity() {
     GetActivity();
     GetEventosList();
     GetEncuestaList();
-  }, [GetActivity])
+  }, [GetActivity, editModal])
 
   useEffect(() => {
     setContador(selectedActivity?.description?.length ?? 0);
@@ -187,29 +188,6 @@ export default function Activity() {
     } catch (error) {
       console.error("Error al eliminar la actividad:", error);
 
-    }
-  };
-
-
-
-  const handleUpdate = async (id_actividad: number, updatedData: FormData) => {
-
-    try {
-      const token = getCookie("authToken") as string || "";
-      const jsonData = Object.fromEntries(updatedData.entries());
-
-      // Actualizamos localmente
-      setActivity(prev =>
-        prev.map(a => a.id_actividad === id_actividad ? { ...a, ...jsonData } : a)
-      );
-
-      // Llamamos al PUT
-      const res = await PUTActivity(id_actividad, token, jsonData);
-      if (res.message !== "Producto actualizado") {
-        // console.log("No se pudo actualizar la actividad.");
-      }
-    } catch (error) {
-      console.error("Error al actualizar la actividad", error);
     }
   };
 
@@ -367,235 +345,6 @@ export default function Activity() {
         </div>
       )}
 
-
-
-      {editModal && selectedActivity && (
-        <div className="fixed inset-0 bg-purple/50 backdrop-blur-sm flex items-center justify-center z-50">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              const formData = new FormData(e.currentTarget);
-              if (!formData.has('is_scoring')) {
-                formData.set('is_scoring', 'false');
-              } else {
-                formData.set('is_scoring', 'true');
-              }
-
-              if (!formData.has('is_active')) {
-                formData.set('is_active', 'false');
-              } else {
-                formData.set('is_active', 'true');
-              }
-
-  
-              handleUpdate(selectedActivity.id_actividad!, formData);
-              setEditModal(false);
-            }}
-            className="
-        bg-white rounded-2xl shadow-lg w-full max-w-2xl p-8 relative
-        max-h-[90vh] overflow-y-auto
-      "
-          >
-            <h2 className="text-2xl font-bold text-violet-600 mb-6 text-center">
-              Editar Actividad
-            </h2>
-
-            {/* Grid de Inputs */}
-            <div className="grid grid-cols-2 gap-4">
-
-              {/* Evento */}
-              <div className="col-span-2">
-                <label className="block text-sm font-medium text-gray-400 mb-1">
-                  Evento
-                </label>
-                <select
-                  name="event"
-                  defaultValue={selectedActivity.event}
-                  className="w-full border border-purple-100 rounded-lg p-2 focus:ring-2 focus:ring-violet-400 text-gray-800"
-                >
-                  {idevent.map((eve) => (
-                    <option key={eve.id_event} value={eve.id_event}>
-                      {eve.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/*Encuestas*/}
-              <div className="col-span-2">
-                <label className="block text-sm font-medium text-gray-400 mb-1">
-                  Encuesta
-                </label>
-                <select
-                  name="survey"
-                  defaultValue={selectedActivity.survey}
-                  className="w-full border border-purple-100 rounded-lg p-2 focus:ring-2 focus:ring-violet-400 text-gray-800"
-                >
-                  <option value="">-- Selecciona una encuesta --</option> {/* 👈 opción por defecto */}
-                  {idencuesta.map((eve) => (
-                    <option key={eve.id_survey} value={eve.id_survey}>
-                      {eve.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Nombre */}
-              <div className="col-span-2">
-                <label className="block text-sm font-medium text-gray-400 mb-1">
-                  Nombre
-                </label>
-                <input
-                  name="name"
-                  defaultValue={selectedActivity.name}
-                  maxLength={100}
-                  onChange={(e) => setContadorName(e.target.value.length)}
-                  className="w-full border border-purple-100 rounded-lg p-2 focus:ring-2 focus:ring-violet-400 text-gray-800"
-                  required
-                />
-                <div className="text-right text-xs text-gray-500 mt-1">
-                  {contadorname}/100
-                </div>
-              </div>
-
-              {/* Descripción */}
-              <div className="col-span-2">
-                <label className="block text-sm font-medium text-gray-400 mb-1">
-                  Descripción
-                </label>
-                <textarea
-                  name="description"
-                  defaultValue={selectedActivity.description}
-                  rows={3}
-                  maxLength={255}
-                  onChange={(e) => setContador(e.target.value.length)}
-                  className="w-full border border-purple-100 rounded-lg p-2 focus:ring-2 focus:ring-violet-400 text-gray-800"
-                />
-                <div className="text-right text-xs text-gray-500 mt-1">
-                  {contador}/255
-                </div>
-              </div>
-
-              {/* Lugar */}
-              <div className="col-span-2">
-                <label className="block text-sm font-medium text-gray-400 mb-1">
-                  Lugar
-                </label>
-                <input
-                  name="place"
-                  maxLength={100}
-                  defaultValue={selectedActivity.place}
-                  onChange={(e) => setContadorLugar(e.target.value.length)}
-                  className="w-full border border-purple-100 rounded-lg p-2 focus:ring-2 focus:ring-violet-400 text-gray-800"
-                />
-                <div className="text-right text-xs text-gray-500 mt-1">
-                  {contadorlugar}/100
-                </div>
-              </div>
-
-              {/* Fechas */}
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">
-                  Fecha de inicio
-                </label>
-                <input
-                  type="date"
-                  name="start_date"
-                  defaultValue={selectedActivity.start_date}
-                  className="w-full border border-purple-100 rounded-lg p-2 focus:ring-2 focus:ring-violet-400 text-gray-800"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">
-                  Fecha de fin
-                </label>
-                <input
-                  type="date"
-                  name="end_date"
-                  defaultValue={selectedActivity.end_date}
-                  className="w-full border border-purple-100 rounded-lg p-2 focus:ring-2 focus:ring-violet-400 text-gray-800"
-                />
-              </div>
-
-              {/* Horas */}
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">
-                  Hora de inicio
-                </label>
-                <input
-                  type="time"
-                  name="start_time"
-                  defaultValue={selectedActivity.start_time}
-                  className="w-full border border-purple-100 rounded-lg p-2 focus:ring-2 focus:ring-violet-400 text-gray-800"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">
-                  Hora de fin
-                </label>
-                <input
-                  type="time"
-                  name="end_time"
-                  defaultValue={selectedActivity.end_time}
-                  className="w-full border border-purple-100 rounded-lg p-2 focus:ring-2 focus:ring-violet-400 text-gray-800"
-                />
-              </div>
-
-
-
-              {/* Activo */}
-              <div className="flex items-center gap-2 col-span-2 mt-2">
-                <input
-                  type="checkbox"
-                  name="is_active"
-                  checked={Boolean(selectedActivity?.is_active)}
-                  className="w-5 h-5 border rounded"
-                  onChange={(e) =>
-                    setSelectedActivity((prev) =>
-                      prev ? { ...prev, is_active: e.target.checked } : prev
-                    )
-                  }
-                />
-                <label className="text-sm font-medium text-gray-400">Activo</label>
-              </div>
-
-              {/*is_scoring  */}
-              <div className="flex items-center gap-2 col-span-2 mt-2">
-                <input
-                  type="checkbox"
-                  name="is_scoring"
-                  checked={Boolean(selectedActivity?.is_scoring)}
-                  className="w-5 h-5 border rounded"
-                  onChange={(e) =>
-                    setSelectedActivity((prev) =>
-                      prev ? { ...prev, is_scoring: e.target.checked } : prev
-                    )
-                  }
-                />
-                <label className="text-sm font-medium text-gray-400">Ponderable</label>
-              </div>
-            </div>
-
-            {/* Botones */}
-            <div className="flex justify-end gap-3 mt-6">
-              <button
-                type="button"
-                onClick={() => setEditModal(false)}
-                className="px-4 py-2 rounded-lg border border-purple-300 text-purple-400 hover:bg-purple-100 "
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-2 rounded-lg bg-purple-600 text-white hover:bg-violet-700"
-              >
-                Guardar
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-
       {qrModalOpen && (
         <div
           className="fixed inset-0 z-[60] flex items-center justify-center bg-purple/50 backdrop-blur-sm px-4"
@@ -678,6 +427,17 @@ export default function Activity() {
         </div>
       )}
 
+      {
+        editModal && (
+          <ModalEditActivity
+            setEditModal={setEditModal}
+            selectedActivity={selectedActivity}
+            setSelectedActivity={setSelectedActivity}
+            idevent={idevent}
+            idencuesta={idencuesta}
+          />
+        )
+      }
 
     </section>
   )
