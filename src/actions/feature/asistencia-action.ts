@@ -42,14 +42,21 @@ export const GETAsistenciall = async ({
   token,
   page = 1,
   pageSize = 20,
+  ordering,                    // ← NUEVO
 }: {
   token: string;
   page?: number;
   pageSize?: number;
+  ordering?: string;           // "name" | "-name"
 }) => {
   try {
+    const qs = new URLSearchParams();
+    qs.set("page", String(page));
+    qs.set("page_size", String(pageSize));  
+    if (ordering) qs.set("ordering", ordering);
+
     const response = await fetch(
-      `${BASE_URL}/api/attendees/?page=${page}&page_size=${pageSize}`,
+      `${BASE_URL}/api/attendees/?${qs.toString()}`,
       {
         method: "GET",
         headers: {
@@ -65,6 +72,7 @@ export const GETAsistenciall = async ({
     return [];
   }
 };
+
 
 export const GETAsistenciaSearch = async ({
   token,

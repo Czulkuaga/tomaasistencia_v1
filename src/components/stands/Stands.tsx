@@ -1,7 +1,7 @@
 "use client"
 import { useState, useEffect, useCallback } from 'react'
 import { getCookie } from "cookies-next";
-import { GETStandsAll, DELETEStands, PATCHStands } from "@/actions/feature/stands-action"
+import { GETStandsAll, DELETEStands, PATCHStands, GETAsistenciaSearch } from "@/actions/feature/stands-action"
 import { GETEvents } from "@/actions/feature/event-action"
 import { MdDelete } from "react-icons/md";
 import { IoQrCode } from "react-icons/io5";
@@ -64,14 +64,18 @@ export default function Stands() {
         total_pages: 0
     });
 
+    // boton de busqueda
+    const [searchTerm, setSearchTerm] = useState("");
+    const [appliedSearch, setAppliedSearch] = useState("");
+
     // para contar el numero de caracteres de la descripcion
     const [contador, setContador] = useState<number>(selectedStands?.description?.length ?? 0);
     const [contadorname, setContadorName] = useState<number>(selectedStands?.name?.length ?? 0);
     const [contadorempresa, setContadorEmpresa] = useState<number>(selectedStands?.company_name?.length ?? 0);
     const [contadorlugar, setContadorLugar] = useState<number>(selectedStands?.location?.length ?? 0);
 
-    
-    
+
+
 
 
     const GetAsistente = useCallback(async () => {
@@ -83,20 +87,39 @@ export default function Stands() {
                 return;
             }
 
-            const response = await GETStandsAll({ token, page: currentPage, pageSize, });
-            setStand(response.results);
-            console.log("arriba", response)
-            setPaginationInfo({
-                count: response.count,
-                page: response.page,
-                page_size: response.page_size,
-                total_pages: response.total_pages
-            })
+            let response: any;
+
+            if (appliedSearch.trim().length > 0) {
+                response = await GETAsistenciaSearch({ token, search: appliedSearch.trim() });
+
+                const results = Array.isArray(response) ? response : (response.results ?? []);
+                setStand(results);
+
+                setPaginationInfo({
+                    count: Array.isArray(response) ? response.length : (response.count ?? results.length),
+                    page: 1,
+                    page_size: results.length,
+                    total_pages: 1,
+                });
+
+            } else {
+                const response = await GETStandsAll({ token, page: currentPage, pageSize, });
+                setStand(response.results);
+                console.log("arriba", response)
+                setPaginationInfo({
+                    count: response.count,
+                    page: response.page,
+                    page_size: response.page_size,
+                    total_pages: response.total_pages
+                })
+
+            }
+
 
         } catch (error) {
             console.error("Error fetching products:", error);
         }
-    }, [currentPage, pageSize])
+    }, [currentPage, pageSize, appliedSearch])
 
     const GetEventosList = async () => {
         try {
@@ -211,12 +234,48 @@ export default function Stands() {
 
     return (
         <section className="space-y-6 overflow-auto w-full">
+             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+        <button
+          className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-400 text-md font-bold"
+          onClick={() => setIsCreateProdu(true)}
+        >
+          + Crear Stands
+        </button>
+
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            placeholder="Buscar"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}  // ← no dispara búsqueda
+            // si NO quieres que Enter busque, no agregues onKeyDown
+            className="w-56 sm:w-72 border border-violet-200 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-900"
+          />
+          <button
+            onClick={() => {
+              setCurrentPage(1);
+              setAppliedSearch(searchTerm); // ← aquí “se aplica” la búsqueda
+            }}
+            className="px-3 py-2 rounded-md bg-violet-600 text-white text-sm hover:bg-violet-700"
+            title="Buscar"
+          >
+            Buscar
+          </button>
+          {(appliedSearch || searchTerm) && (
             <button
-                className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-400 text-md font-bold mb-4"
-                onClick={() => setIsCreateProdu(true)}
+              onClick={() => {
+                setSearchTerm("");
+                setAppliedSearch("");   // ← limpia búsqueda
+                setCurrentPage(1);
+              }}
+              className="px-3 py-2 rounded-md bg-gray-100 text-gray-700 text-sm hover:bg-gray-200"
+              title="Limpiar"
             >
-                + Crear Stands
+              Limpiar
             </button>
+          )}
+        </div>
+      </div>
 
             <ModalStand
                 isOpen={isCreateProdu}
@@ -365,11 +424,13 @@ export default function Stands() {
                         onSubmit={(e) => {
                             e.preventDefault();
                             const formData = new FormData(e.currentTarget);
-                            handleUpdate(selectedStands.id_stand!, formData);
                             formData.set('is_active', selectedStands?.is_active ? 'true' : 'false');
                             formData.set('is_scoring', selectedStands?.is_scoring ? 'true' : 'false');
+                            handleUpdate(selectedStands.id_stand!, formData);
                             setEditModal(false);
+                            GetAsistente();
                         }}
+
                         className="
  bg-white rounded-2xl shadow-lg w-full max-w-2xl p-8 relative
         max-h-[90vh] overflow-y-auto
@@ -624,4 +685,3 @@ export default function Stands() {
 
     )
 }
-

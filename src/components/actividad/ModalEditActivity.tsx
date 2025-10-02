@@ -3,7 +3,7 @@
 import { PUTActivity } from '@/actions/feature/activity-action';
 import { getCookie } from 'cookies-next';
 import { useRouter } from 'next/navigation';
-import React, { use, useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
 interface ActivityEventProps {
     setEditModal: React.Dispatch<React.SetStateAction<boolean>>;

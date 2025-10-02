@@ -1,29 +1,29 @@
 "use server";
 
-const BASE_URL = process.env.SERVER_URL
+const BASE_URL = process.env.SERVER_URL;
 
 // interface FormData {
 //   id_asistencia?: number;z
 
 //   id_asistente: number;
 //   attendee_id?: number;
-  
+
 //   activity_id?: number;
 //   id_actividad?: number;
 
 //   event_id?: number;
-//   id_event?: number, 
+//   id_event?: number,
 //   token?: string;
 // }
 
-interface FormData  {
+interface FormData {
   token: string;
   attendee_id: number;
   event_id: number;
   activity_id: number;
 
-  attendee_email: string
-};
+  attendee_email: string;
+}
 
 export const GETControl = async ({ token }: { token: string }) => {
   try {
@@ -44,19 +44,25 @@ export const GETControl = async ({ token }: { token: string }) => {
   }
 };
 
-
 export const GETControlAll = async ({
   token,
   page = 1,
   pageSize = 10,
+  ordering,                 // ← NUEVO
 }: {
   token: string;
   page?: number;
   pageSize?: number;
+  ordering?: string;        // p.ej. "-date,-time" o "date,time"
 }) => {
   try {
+    const qs = new URLSearchParams();
+    qs.set("page", String(page));
+    qs.set("page_size", String(pageSize));     // DRF usa page_size
+    if (ordering) qs.set("ordering", ordering);
+
     const response = await fetch(
-      `${BASE_URL}/api/controls/?page=${page}&page_size=${pageSize}`,
+      `${BASE_URL}/api/controls/?${qs.toString()}`,
       {
         method: "GET",
         headers: {
@@ -65,27 +71,69 @@ export const GETControlAll = async ({
         },
       }
     );
-    // console.log(response)
-    const control = await response.json();
 
-    return control;
+    return await response.json();
   } catch (error) {
     console.log("Error al hacer la peticion", error);
     return [];
   }
 };
 
-export const POSTCrontol = async ({ token, attendee_id, event_id, activity_id, attendee_email }: FormData) => {
+
+//metodo get de busqueda
+export const GETAsistenciaSearch = async ({token,search = "",page = 1,pageSize = 30,}: {token: string;search?: string;page?: number;pageSize?: number;}) => {
+  try {
+
+    const params = new URLSearchParams();
+    if (search) params.append("search", search);
+    if (page) params.append("page", page.toString());
+    if (pageSize) params.append("pageSize", pageSize.toString());
+
+    const response = await fetch(
+      `${BASE_URL}/api/controls?${params.toString()}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    const control = await response.json();
+    return control;
+  } catch (error) {
+    console.log("Error al hacer la petición", error);
+    return { results: [] };
+  }
+};
+
+
+export const POSTCrontol = async ({
+  token,
+  attendee_id,
+  event_id,
+  activity_id,
+  attendee_email,
+}: FormData) => {
   const response = await fetch(`${BASE_URL}/api/controls/register/`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ attendee_id, event_id, activity_id, attendee_email }),
+    body: JSON.stringify({
+      attendee_id,
+      event_id,
+      activity_id,
+      attendee_email,
+    }),
   });
-console.log("datos enviados:",JSON.stringify({ attendee_id, event_id, activity_id, attendee_email }))
+  console.log(
+    "datos enviados:",
+    JSON.stringify({ attendee_id, event_id, activity_id, attendee_email })
+  );
   const control = await response.json();
-  console.log("datos",control)
+  console.log("datos", control);
   return control;
 };

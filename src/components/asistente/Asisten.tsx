@@ -35,6 +35,7 @@ interface PaginationInfo {
 }
 
 const ASISTENCIA_OPTIONS = [{ value: "PRESENCIAL" }, { value: "VIRTUAL" }];
+type SortDir = 'asc' | 'desc';
 
 export default function Asisten() {
   const [asistente, setAsistente] = useState<Asistencia[]>([]);
@@ -49,6 +50,12 @@ export default function Asisten() {
   // boton de busqueda
   const [searchTerm, setSearchTerm] = useState("");
   const [appliedSearch, setAppliedSearch] = useState("");
+
+  const [nameSort, setNameSort] = useState<SortDir>('asc');
+
+  const ordering = nameSort === 'asc' ? 'name' : '-name';
+  const toggleNameSort = () => setNameSort(d => (d === 'asc' ? 'desc' : 'asc'));
+  const nameSortIcon = nameSort === 'asc' ? '▲' : '▼';
 
 
 
@@ -97,7 +104,7 @@ export default function Asisten() {
         });
       } else {
         // flujo normal paginado
-        response = await GETAsistenciall({ token, page: currentPage, pageSize });
+        response = await GETAsistenciall({ token, page: currentPage, pageSize, ordering });
         setAsistente(response.results);
         setPaginationInfo({
           count: response.count,
@@ -109,7 +116,7 @@ export default function Asisten() {
     } catch (error) {
       console.error("Error fetching attendees:", error);
     }
-  }, [currentPage, pageSize, appliedSearch]);
+  }, [currentPage, pageSize, appliedSearch, ordering]);
 
 
   const GetEventosList = async () => {
@@ -264,7 +271,16 @@ export default function Asisten() {
               <th className="border p-1 text-center sm:p-2">Evento</th>
               <th className="border p-1 text-center sm:p-2">Tipo Identificación</th>
               <th className="border p-1 text-center sm:p-2">Número Identificación</th>
-              <th className="border p-1 text-center sm:p-2">Nombre</th>
+              <th className="border p-1 text-center sm:p-2">
+                <button
+                  type="button"
+                  onClick={() => { toggleNameSort(); /* opcional: volver a página 1 */ setCurrentPage(1); }}
+                  className="inline-flex items-center gap-1"
+                  title="Ordenar por nombre"
+                >
+                  Nombre <span>{nameSortIcon}</span>
+                </button>
+              </th>
               {/* <th className="border p-2 min-w-[80px]">País</th> */}
               <th className="border p-1 text-center sm:p-2">Celular</th>
               <th className="border p-1 text-center sm:p-2">Nombre Empresa</th>
@@ -527,7 +543,7 @@ export default function Asisten() {
                   placeholder="Correo"
                   type="email"
                   className="w-full border border-violet-100 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-900"
-                  onChange={(e) => { e.currentTarget.value = e.currentTarget.value.toLowerCase()}}
+                  onChange={(e) => { e.currentTarget.value = e.currentTarget.value.toLowerCase() }}
                 />
                 {formErrors.email && (
                   <p className="text-red-500 text-sm mt-1">{formErrors.email}</p>
@@ -639,6 +655,6 @@ export default function Asisten() {
         </div>
       )}
     </section>
-      )
+  )
 }
 

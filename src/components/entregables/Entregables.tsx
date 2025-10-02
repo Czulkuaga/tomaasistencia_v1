@@ -1,7 +1,7 @@
 "use client"
 import { useState, useEffect, useCallback } from 'react'
 import { getCookie } from "cookies-next";
-import { GETDeliverablesAll, DELETEDeliverables, PUTDeliverables } from "@/actions/feature/deliverables-action"
+import { GETDeliverablesAll, DELETEDeliverables, PUTDeliverables, GETEntregableaSearch } from "@/actions/feature/deliverables-action"
 import { GETEvents } from "@/actions/feature/event-action"
 import { MdDelete } from "react-icons/md";
 import { FaUserEdit } from "react-icons/fa";
@@ -73,6 +73,10 @@ export default function Entregables() {
     total_pages: 0
   });
 
+  // boton de busqueda
+  const [searchTerm, setSearchTerm] = useState("");
+  const [appliedSearch, setAppliedSearch] = useState("");
+
 
 
 
@@ -80,19 +84,38 @@ export default function Entregables() {
   const GETDeliverables = useCallback(async () => {
     try {
       const token = getCookie("authToken") as string ?? "";
-      const response = await GETDeliverablesAll({ token, page: currentPage, pageSize, });
-      setDeliverable(response.results);
-      setPaginationInfo({
-        count: response.count,
-        page: response.page,
-        page_size: response.page_size,
-        total_pages: response.total_pages
-      })
+
+      let response: any;
+
+      if (appliedSearch.trim().length > 0) {
+        response = await GETEntregableaSearch({ token, search: appliedSearch.trim() });
+
+        const results = Array.isArray(response) ? response : (response.results ?? []);
+        setDeliverable(results);
+
+        setPaginationInfo({
+          count: Array.isArray(response) ? response.length : (response.count ?? results.length),
+          page: 1,
+          page_size: results.length,
+          total_pages: 1,
+        });
+
+      } else {
+
+        const response = await GETDeliverablesAll({ token, page: currentPage, pageSize, });
+        setDeliverable(response.results);
+        setPaginationInfo({
+          count: response.count,
+          page: response.page,
+          page_size: response.page_size,
+          total_pages: response.total_pages
+        })
+      }
 
     } catch (error) {
       console.error("Error fetching activities:", error);
     }
-  }, [currentPage, pageSize])
+  }, [currentPage, pageSize, appliedSearch])
 
   // Obtener lista de eventos
   const GetEventosList = async () => {
@@ -217,12 +240,48 @@ export default function Entregables() {
 
   return (
     <section className="space-y-6 overflow-auto w-full">
-      <button
-        className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-400 text-md font-bold mb-4"
-        onClick={() => setIsCreateProdu(true)}
-      >
-        + Crear Entregable
-      </button>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+        <button
+          className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-400 text-md font-bold"
+          onClick={() => setIsCreateProdu(true)}
+        >
+          + Crear Entregable
+        </button>
+
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            placeholder="Buscar"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}  // ← no dispara búsqueda
+            // si NO quieres que Enter busque, no agregues onKeyDown
+            className="w-56 sm:w-72 border border-violet-200 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-900"
+          />
+          <button
+            onClick={() => {
+              setCurrentPage(1);
+              setAppliedSearch(searchTerm); // ← aquí “se aplica” la búsqueda
+            }}
+            className="px-3 py-2 rounded-md bg-violet-600 text-white text-sm hover:bg-violet-700"
+            title="Buscar"
+          >
+            Buscar
+          </button>
+          {(appliedSearch || searchTerm) && (
+            <button
+              onClick={() => {
+                setSearchTerm("");
+                setAppliedSearch("");   // ← limpia búsqueda
+                setCurrentPage(1);
+              }}
+              className="px-3 py-2 rounded-md bg-gray-100 text-gray-700 text-sm hover:bg-gray-200"
+              title="Limpiar"
+            >
+              Limpiar
+            </button>
+          )}
+        </div>
+      </div>
 
       <ModalEntregable
         isOpen={isCreateProdu}
@@ -612,7 +671,7 @@ export default function Entregables() {
                 }}
                 className="px-4 py-2 rounded bg-violet-600 text-white hover:bg-violet-700"
               >
-                Descargar 
+                Descargar
               </button>
 
               <a

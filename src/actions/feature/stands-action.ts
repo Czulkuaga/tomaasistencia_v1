@@ -77,6 +77,36 @@ export const GETStandsAll = async ({  token, page = 1, pageSize = 10}: { token: 
   }
 };
 
+//metodo get de busqueda
+export const GETAsistenciaSearch = async ({
+  token,
+  search = "",
+}: {
+  token: string;
+  search?: string;
+}) => {
+  try {
+    const response = await fetch(
+      `${BASE_URL}/api/stands/${
+        search ? `?search=${encodeURIComponent(search)}` : ""
+      }`,
+      {
+        method: "GET",
+        headers: {
+          "Content-type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    const asistente = await response.json();
+    return asistente;
+  } catch (error) {
+    console.log("Error al hacer la petición", error);
+    return { results: [] };
+  }
+};
+
 //METODO POST
 
 export const POSTCreateStands = async (formData: FormData) => {

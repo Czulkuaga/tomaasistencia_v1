@@ -1,7 +1,7 @@
 "use client"
 import { useState, useEffect, useCallback } from 'react'
 import { getCookie } from "cookies-next";
-import { GETActivityAll, DELETEActivity, PUTActivity } from "@/actions/feature/activity-action"
+import { GETActivityAll, DELETEActivity, GETAsistenciaSearch } from "@/actions/feature/activity-action"
 import { GETEvents } from "@/actions/feature/event-action"
 import { MdDelete } from "react-icons/md";
 import { FaUserEdit } from "react-icons/fa";
@@ -59,14 +59,13 @@ export default function Activity() {
   const [qrValue, setQrValue] = useState<string>('');
   const [vista, setVista] = useState(false);
 
-  // para contar el numero de caracteres de la descripcion
-  const [contador, setContador] = useState<number>(selectedActivity?.description?.length ?? 0);
-  const [contadorname, setContadorName] = useState<number>(selectedActivity?.name?.length ?? 0);
-  const [contadorlugar, setContadorLugar] = useState<number>(selectedActivity?.place?.length ?? 0);
+   // boton de busqueda
+  const [searchTerm, setSearchTerm] = useState("");
+  const [appliedSearch, setAppliedSearch] = useState("");
 
   // todo el tema de la paginacion 
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(15);
+  const [pageSize] = useState(20);
   const [paginationInfo, setPaginationInfo] = useState<PaginationInfo>({
     count: 0,
     page: 1,
@@ -74,30 +73,41 @@ export default function Activity() {
     total_pages: 0
   });
 
-  // const baseUrl =
-  //   process.env.NEXT_PUBLIC_APP_URL ||
-  //   (typeof window !== "undefined" ? window.location.origin : "");
-
-
-
-
   // Función para obtener actividades
   const GetActivity = useCallback(async () => {
     try {
       const token = getCookie("authToken") as string ?? "";
-      const response = await GETActivityAll({ token, page: currentPage, pageSize, });
-      setActivity(response.results);
-      setPaginationInfo({
-        count: response.count,
-        page: response.page,
-        page_size: response.page_size,
-        total_pages: response.total_pages
-      })
+
+      let response: any;
+
+      if(appliedSearch.trim().length > 0){
+        response = await GETAsistenciaSearch({token, search: appliedSearch.trim()});
+
+        const results = Array.isArray(response) ? response : (response.results ?? []);
+        setActivity(results);
+
+        setPaginationInfo({
+          count: Array.isArray(response) ? response.length : (response.count ?? results.length),
+          page: 1,
+          page_size: results.length,
+          total_pages: 1,
+        });
+
+      }else{
+        const response = await GETActivityAll({ token, page: currentPage, pageSize, });
+        setActivity(response.results);
+        setPaginationInfo({
+          count: response.count,
+          page: response.page,
+          page_size: response.page_size,
+          total_pages: response.total_pages
+        })
+      }
 
     } catch (error) {
       console.error("Error fetching activities:", error);
     }
-  }, [currentPage, pageSize])
+  }, [currentPage, pageSize, appliedSearch])
 
   // Obtener lista de eventos
   const GetEventosList = async () => {
@@ -127,10 +137,6 @@ export default function Activity() {
     GetEventosList();
     GetEncuestaList();
   }, [GetActivity, editModal])
-
-  useEffect(() => {
-    setContador(selectedActivity?.description?.length ?? 0);
-  }, [selectedActivity]);
 
   // Funciones de paginación
   const handlePreviousPage = () => {
@@ -200,12 +206,48 @@ export default function Activity() {
 
   return (
     <section className="space-y-6 overflow-auto w-full">
-      <button
-        className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-400 text-md font-bold mb-4"
-        onClick={() => setIsCreateProdu(true)}
-      >
-        + Crear Actividad
-      </button>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+        <button
+          className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-400 text-md font-bold"
+          onClick={() => setIsCreateProdu(true)}
+        >
+          + Crear Actividad
+        </button>
+
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            placeholder="Buscar"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}  // ← no dispara búsqueda
+            // si NO quieres que Enter busque, no agregues onKeyDown
+            className="w-56 sm:w-72 border border-violet-200 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-900"
+          />
+          <button
+            onClick={() => {
+              setCurrentPage(1);
+              setAppliedSearch(searchTerm); // ← aquí “se aplica” la búsqueda
+            }}
+            className="px-3 py-2 rounded-md bg-violet-600 text-white text-sm hover:bg-violet-700"
+            title="Buscar"
+          >
+            Buscar
+          </button>
+          {(appliedSearch || searchTerm) && (
+            <button
+              onClick={() => {
+                setSearchTerm("");
+                setAppliedSearch("");   // ← limpia búsqueda
+                setCurrentPage(1);
+              }}
+              className="px-3 py-2 rounded-md bg-gray-100 text-gray-700 text-sm hover:bg-gray-200"
+              title="Limpiar"
+            >
+              Limpiar
+            </button>
+          )}
+        </div>
+      </div>
 
       <ModalActivity
         isOpen={isCreateProdu}
