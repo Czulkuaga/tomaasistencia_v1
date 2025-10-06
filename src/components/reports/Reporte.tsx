@@ -2,16 +2,29 @@
 "use client";
 import { useState, useEffect } from "react";
 import { getCookie } from "cookies-next";
-import { GETReporte, GETAsistenciaActividad, GETAsistenciaStand, GETAsistenciaEntregable, GETReporteCompany } from "@/actions/feature/reporte-action";
-import { GETEvents } from "@/actions/feature/event-action"
-
-
+import {
+  GETReporte,
+  GETAsistenciaActividad,
+  GETAsistenciaStand,
+  GETAsistenciaEntregable,
+  GETReporteCompany,
+  GETstandattendanceattendee, // ✅ NUEVO (ya lo tenías importado)
+} from "@/actions/feature/reporte-action";
+import { GETEvents } from "@/actions/feature/event-action";
 
 type RowAsistente = {
   nombre: string;
   company_name: string | null;
   actividades_asistidas: number;
   actividades_totales: number;
+  pct_asistencia: number;
+};
+
+type RowAsistenteStand = {
+  nombre: string;
+  company_name: string | null;
+  stands_asistidos: number;
+  stands_totales: number;
   pct_asistencia: number;
 };
 
@@ -41,12 +54,21 @@ interface EventItem {
   name: string;
 }
 
-type ReportKey = "by-company" | "activity-attendance" | "attendance-per-attendee" | "top-companies" | "stand-attendance" | "deliverable-attendance";
+/** ✅ Agregamos la nueva clave "stand-attendance-per-attendee" */
+type ReportKey =
+  | "by-company"
+  | "activity-attendance"
+  | "attendance-per-attendee"
+  | "top-companies"
+  | "stand-attendance"
+  | "deliverable-attendance"
+  | "stand-attendance-per-attendee"; // ✅ NUEVO
 
 export default function ReporteTabla() {
   const [selected, setSelected] = useState<ReportKey>("attendance-per-attendee");
 
   const [rowsAsistente, setRowsAsistente] = useState<RowAsistente[]>([]);
+  const [rowsAsistenteStand, setRowsAsistenteStand] = useState<RowAsistenteStand[]>([]); // ✅ NUEVO
 
   const [asistenciasActividad, setAsistenciaActividad] = useState<RowActividad[]>([]);
   const [asistenciaStands, setAsistenciaStands] = useState<AsistenciaStands[]>([]);
@@ -61,28 +83,25 @@ export default function ReporteTabla() {
   const [events, setEvents] = useState<EventItem[]>([]);
   const [eventsLoading, setEventsLoading] = useState(false);
 
-
   const GetEventosList = async () => {
     try {
-      setEventsLoading(true);            // ⬅️ empieza “cargando”
+      setEventsLoading(true);
       const token = (getCookie("authToken") as string) ?? "";
       if (!token) return;
 
       const response = await GETEvents({ token });
-      // ajusta si tu API no devuelve { results: [...] }
       setEvents(response?.results ?? []);
     } catch (error) {
       console.error("Error fetching events:", error);
-      setEvents([]);                     // opcional: limpia si falla
+      setEvents([]);
     } finally {
-      setEventsLoading(false);           // ⬅️ termina “cargando”
+      setEventsLoading(false);
     }
   };
 
-
   useEffect(() => {
     GetEventosList();
-  }, [])
+  }, []);
 
   const exportar = async () => {
     try {
@@ -91,7 +110,7 @@ export default function ReporteTabla() {
       let filename = "";
 
       if (selected === "attendance-per-attendee") {
-        data = rowsAsistente.map(r => ({
+        data = rowsAsistente.map((r) => ({
           Asistente: r.nombre,
           Empresa: r.company_name ?? "—",
           Asistidas: r.actividades_asistidas,
@@ -100,37 +119,40 @@ export default function ReporteTabla() {
         }));
         sheetName = "Asistencia por asistente";
         filename = "reporte_asistente";
-      }
-
-      else if (selected === "activity-attendance") {
-        data = asistenciasActividad.map(r => ({
+      } else if (selected === "stand-attendance-per-attendee") {
+        // ✅ NUEVO: por asistente en STANDS
+        data = rowsAsistenteStand.map((r) => ({
+          Asistente: r.nombre,
+          Empresa: r.company_name ?? "—",
+          "Stands asistidos": r.stands_asistidos,
+          "Stands totales": r.stands_totales,
+          "% Asistencia": Number.isFinite(r.pct_asistencia) ? Number(r.pct_asistencia).toFixed(1) : "0.0",
+        }));
+        sheetName = "Asistencia stands por asistente";
+        filename = "reporte_stands_por_asistente";
+      } else if (selected === "activity-attendance") {
+        data = asistenciasActividad.map((r) => ({
           Actividad: r.actividad,
           "Asistentes únicos": r.asistentes_unicos,
         }));
         sheetName = "Asistencia actividades";
         filename = "reporte_actividades";
-      }
-
-      else if (selected === "stand-attendance") {
-        data = asistenciaStands.map(r => ({
+      } else if (selected === "stand-attendance") {
+        data = asistenciaStands.map((r) => ({
           Stand: r.stand,
           "Asistentes únicos": r.asistentes_unicos,
         }));
         sheetName = "Asistencia stands";
         filename = "reporte_stands";
-      }
-
-      else if (selected === "deliverable-attendance") {
-        data = asistenciasEntregable.map(r => ({
+      } else if (selected === "deliverable-attendance") {
+        data = asistenciasEntregable.map((r) => ({
           Entregable: r.entregable,
           "Asistentes únicos": r.asistentes_unicos,
         }));
         sheetName = "Asistencia entregables";
         filename = "reporte_entregables";
-      }
-
-      else if (selected === "top-companies") {
-        data = rowsCompany.map(r => ({
+      } else if (selected === "top-companies") {
+        data = rowsCompany.map((r) => ({
           Compañía: r.empresa,
           "Asistentes con ingreso": r.asistentes_con_ingreso,
         }));
@@ -147,10 +169,7 @@ export default function ReporteTabla() {
       const ws = XLSX.utils.json_to_sheet(data);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, sheetName);
-
-
       const fname = `${filename}.xlsx`;
-
       XLSX.writeFile(wb, fname);
     } catch (e) {
       console.error(e);
@@ -158,7 +177,14 @@ export default function ReporteTabla() {
     }
   };
 
-
+  const limpiarTablas = () => {
+    setRowsAsistente([]);
+    setRowsAsistenteStand([]); // ✅ limpia también la nueva
+    setAsistenciaActividad([]);
+    setAsistenciaStands([]);
+    setAsistenciasEntregable([]);
+    setRowsCompany([]);
+  };
 
   const generar = async () => {
     try {
@@ -171,35 +197,35 @@ export default function ReporteTabla() {
       const base = { token } as any;
       const withEvent = eventId > 0 ? { ...base, event_id: eventId } : base;
 
+      limpiarTablas();
+
       if (selected === "attendance-per-attendee") {
         const data = await GETReporte(withEvent);
         setRowsAsistente(Array.isArray(data) ? data : []);
-        setAsistenciaActividad([]);
+      } else if (selected === "stand-attendance-per-attendee") {
+        // ✅ NUEVO: trae asistencia a stands por asistente
+        const data = await GETstandattendanceattendee(withEvent);
+        setRowsAsistenteStand(Array.isArray(data) ? data : []);
       } else if (selected === "activity-attendance") {
         const data = await GETAsistenciaActividad(withEvent);
         setAsistenciaActividad(Array.isArray(data) ? data : []);
-        setRowsAsistente([]);
       } else if (selected === "stand-attendance") {
         const data = await GETAsistenciaStand(withEvent);
         setAsistenciaStands(Array.isArray(data) ? data : []);
-        setRowsAsistente([]);
       } else if (selected === "deliverable-attendance") {
         const data = await GETAsistenciaEntregable(withEvent);
         setAsistenciasEntregable(Array.isArray(data) ? data : []);
-        setRowsAsistente([]);
       } else if (selected === "top-companies") {
         const data = await GETReporteCompany(withEvent);
         setRowsCompany(Array.isArray(data) ? data : []);
-        setRowsAsistente([]);
       }
     } catch (e: any) {
       setErr(e?.message || "Error generando reporte");
-      setRowsAsistente([]); setAsistenciaActividad([]);
+      limpiarTablas();
     } finally {
       setLoading(false);
     }
   };
-
 
   return (
     <div className="p-4 space-y-4">
@@ -234,6 +260,8 @@ export default function ReporteTabla() {
             <option value="stand-attendance">Asistencia De Stands</option>
             <option value="deliverable-attendance">Asistencia De Entregables</option>
             <option value="attendance-per-attendee"> Asistencia Por Asistente</option>
+            <option value="stand-attendance-per-attendee">Asistencia Por Asistente (Stands)</option>
+
           </select>
 
 
@@ -311,6 +339,45 @@ export default function ReporteTabla() {
           </table>
         </div>
       )}
+
+       {/* ✅ Tabla: Porcentaje de asistencia por asistente (STANDS) */}
+      {selected === "stand-attendance-per-attendee" && (
+        <div className="w-full overflow-x-auto rounded-lg shadow">
+          <table className="w-full min-w-0 md:min-w-[1100px] border border-gray-200 rounded-lg text-[11px] md:text-sm shadow-sm">
+            <thead className="bg-violet-100 text-violet-50 uppercase text-[10px] md:text-xs font-semibold">
+              <tr className="bg-violet-500">
+                <th className="p-1 md:p-2 border leading-tight">Asistente</th>
+                <th className="p-1 md:p-2 border leading-tight">Empresa</th>
+                <th className="p-1 md:p-2 border text-right leading-tight">Stands asistidos</th>
+                <th className="p-1 md:p-2 border text-right leading-tight">Stands totales</th>
+                <th className="p-1 md:p-2 border text-right leading-tight">% Asistencia</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rowsAsistenteStand.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="p-2 md:p-4 text-center text-gray-500">
+                    {loading ? "Cargando…" : "Sin datos"}
+                  </td>
+                </tr>
+              ) : (
+                rowsAsistenteStand.map((r, i) => (
+                  <tr key={i} className="odd:bg-purple-50">
+                    <td className="p-1 md:p-2 border whitespace-nowrap truncate max-w-[140px] md:max-w-none">{r.nombre}</td>
+                    <td className="p-1 md:p-2 border whitespace-nowrap truncate max-w-[140px] md:max-w-none">{r.company_name ?? "—"}</td>
+                    <td className="p-1 md:p-2 border text-right">{r.stands_asistidos}</td>
+                    <td className="p-1 md:p-2 border text-right">{r.stands_totales}</td>
+                    <td className="p-1 md:p-2 border text-right">
+                      {Number.isFinite(r.pct_asistencia) ? r.pct_asistencia.toFixed(1) : "0.0"}%
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+
 
       {/* Tabla: Asistencia en actividades (id_actividad, actividad, asistentes_unicos) */}
       {selected === "activity-attendance" && (

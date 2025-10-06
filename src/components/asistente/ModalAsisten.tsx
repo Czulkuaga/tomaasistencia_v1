@@ -89,18 +89,18 @@ export default function ModalAsisten({
   }, [isOpen]);
 
 
-  const inputChangeHandler = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    setErrors({})
-    const target = e.target;
-    const value: string = target.value;
-    const name = target.name;
-    setFormData(form => {
-      return {
-        ...form,
-        [name]: value
-      }
-    })
-  }
+  const inputChangeHandler = (
+  e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+) => {
+  setErrors({});
+  const { name, value } = e.target;
+
+  setFormData(prev => ({
+    ...prev,
+    [name]: value
+  }));
+};
+
 
 
   const onSubmit = async (e: React.FormEvent) => {
@@ -112,10 +112,13 @@ export default function ModalAsisten({
     if (formData.email === "") newErrors.email = 'El Correo es obligatorio';
 
     if (Object.keys(newErrors).length === 0) {
+      
+      const newformData = { ...formData, email: formData.email?.toLowerCase()}
+      console.log("datos",newformData)
       try {
         const token = (getCookie("authToken") as string) || "";
         // ✅ pasa el payload dentro de "data"
-        const res = await POSTCreateAsiste({ token, data: formData });
+        const res = await POSTCreateAsiste({ token, data: newformData });
 
 
         if (res.error) {
@@ -295,7 +298,7 @@ export default function ModalAsisten({
                       name="email"
                       maxLength={60}
                       value={formData.email}
-                      onChange={(e) => {e.target.value = e.target.value.toLowerCase(); inputChangeHandler(e);}}
+                      onChange={inputChangeHandler}
                       className="w-full border border-violet-100 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-900"
                     />
                     {

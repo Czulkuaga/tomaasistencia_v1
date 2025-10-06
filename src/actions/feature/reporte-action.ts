@@ -51,6 +51,34 @@ export const GETAsistenciaActividad = async ({
     return [];
   }
 };
+
+
+export const GETstandattendanceattendee = async ({
+  token,
+  event_id,
+}: {
+  token: string;
+  event_id: number | string;
+}) => {
+  try {
+    const response = await fetch(`${BASE_URL}/api/reports/events/${event_id}/stand-attendance-per-attendee/`, {
+      method: "GET",
+      headers: {
+        "Content-type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    // console.log(response)
+    const reporte = await response.json();
+
+    return reporte;
+  } catch (error) {
+    console.log("Error al hacer la peticion", error);
+    return [];
+  }
+};
+
+
 export const GETAsistenciaStand = async ({
   token,
   event_id,

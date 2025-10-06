@@ -618,7 +618,7 @@ export default function RegisterUser() {
                         type="email"
                         placeholder="Correo del asistente"
                         value={email}
-                        onChange={(e) => setEmail(e.target.value.toLowerCase())}
+                        onChange={(e) => setEmail(e.target.value)}
                         disabled={
                             Boolean(paramError)
                             || (ctx === "activity" && !actId)

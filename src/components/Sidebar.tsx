@@ -324,6 +324,9 @@ export default function Sidebar({ username, fromColor = "from-violet-600", }: { 
                 <Link href="/dashboard/controlentregable" className="py-1 px-2 rounded hover:bg-purple-400 text-sm">
                   Control Entregables
                 </Link>
+                <Link href="/dashboard/controlsurveys" className="py-1 px-2 rounded hover:bg-purple-400 text-sm">
+                  Control Encuesta
+                </Link>
                 {/* <Link href="/dashboard/control/registro" className="py-1 px-2 rounded hover:bg-purple-400 text-sm">
                   Registro
                 </Link> */}
@@ -598,6 +601,9 @@ export default function Sidebar({ username, fromColor = "from-violet-600", }: { 
                   <Link href="/dashboard/controlentregable" className="py-1 px-2 rounded hover:bg-purple-300 text-sm">
                     Control Entregables
                   </Link>
+                  <Link href="/dashboard/controlsurveys" className="py-1 px-2 rounded hover:bg-purple-400 text-sm">
+                  Control Encuesta
+                </Link>
                   {/* <Link href="/dashboard/control/registro" className="py-1 px-2 rounded hover:bg-purple-300 text-sm">
                     Registro
                   </Link> */}

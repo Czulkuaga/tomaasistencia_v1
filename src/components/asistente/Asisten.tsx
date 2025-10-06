@@ -394,20 +394,13 @@ export default function Asisten() {
 
                 const fd = new FormData(e.currentTarget);
 
-                // Normalizar email: minúsculas + sin espacios
-                const rawEmail = fd.get("email")?.toString() ?? "";
-                const normalizedEmail = rawEmail.toLowerCase().replace(/\s/g, "");
-                fd.set("email", normalizedEmail);
+                const rawEmail = (fd.get("email")?.toString() ?? "");
 
-                // Validación
+                // ② normalizar: quitar TODOS los espacios (incluye los del medio) y pasar a minúsculas
+                const emailClean = rawEmail.replace(/\s+/g, "").toLowerCase();
 
-                const emailRegex =
-                      /^[A-Za-z0-9._%+-]+@(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+(?:[A-Za-z]{2,}|xn--[A-Za-z0-9-]{2,})$/i;  
-                if (!emailRegex.test(normalizedEmail)) {
-                  setFormErrors({ email: "formato de correo invalido" });
-                  return;
-                }
-
+                // ③ sobreescribir en el FormData
+                fd.set("email", emailClean);
                 setFormErrors({});
                 handleUpdate(selectedAsistente!.id_asistente!, fd);
                 setEditModal(false);
@@ -541,10 +534,10 @@ export default function Asisten() {
                   name="email"
                   defaultValue={selectedAsistente.email}
                   placeholder="Correo"
-                  type="email"
+                  type="text"
                   className="w-full border border-violet-100 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-900"
-                  onChange={(e) => { e.currentTarget.value = e.currentTarget.value.toLowerCase() }}
                 />
+
                 {formErrors.email && (
                   <p className="text-red-500 text-sm mt-1">{formErrors.email}</p>
                 )}

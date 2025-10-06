@@ -533,7 +533,6 @@ export default function Stands() {
                                 <input
                                     name="location"
                                     defaultValue={selectedStands.location}
-                                    placeholder="Correo"
                                     maxLength={100}
                                     onChange={(e) => setContadorLugar(e.target.value.length)}
                                     type="location"
