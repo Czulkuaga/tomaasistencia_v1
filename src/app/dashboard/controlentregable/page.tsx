@@ -15,18 +15,18 @@ export default async function Page({ searchParams }: PageProps) {
     const params = await searchParams;
 
     const page = Number(takeFirst(params.page)) || 1;
-    const pageSize = Number(takeFirst(params.pageSize)) || 20;
+    const page_size = Number(takeFirst(params.pageSize)) || 20;
     const search = takeFirst(params.search) || "";
 
     const cookieStore = await cookies();
     const token = cookieStore.get("authToken")?.value ?? "";
 
-    const data = await GETControDeliverablesAll({ token, search: search.trim(), page: page, pageSize: pageSize })
+    const data = await GETControDeliverablesAll({ token, search: search.trim(), page: page, pageSize: page_size })
 
     return <ControlEntregables 
         initialData={data.results} 
         initialPage={page} 
-        initialPageSize={pageSize} 
+        initialPageSize={page_size} 
         initialSearch={search} 
         totalPages={data.total_pages}
         totalCount={data.count}

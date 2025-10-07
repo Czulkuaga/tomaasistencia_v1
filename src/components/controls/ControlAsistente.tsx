@@ -49,14 +49,14 @@ export default function ControlAsistente({ initialData, initialPage, initialPage
     setQuery({
       search: term.trim() || undefined,
       page: 1,
-      pageSize: initialPageSize,
+      page_size: initialPageSize,
     });
   }, [term, setQuery, initialPageSize]);
 
   // Limpiar
   const handleClear = useCallback(() => {
     setTerm("");
-    setQuery({ search: undefined, page: initialPage, pageSize: initialPageSize });
+    setQuery({ search: undefined, page: initialPage, page_size: initialPageSize });
   }, [setQuery, initialPageSize, initialPage]);
 
   // Paginación
@@ -64,7 +64,7 @@ export default function ControlAsistente({ initialData, initialPage, initialPage
     if (initialPage && initialPage > 1) {
       setQuery({
         page: initialPage - 1,
-        pageSize: initialPageSize,
+        page_size: initialPageSize,
         search: term.trim() || undefined,
       });
     }
@@ -74,7 +74,7 @@ export default function ControlAsistente({ initialData, initialPage, initialPage
     if (initialPage && totalPages && initialPage < totalPages) {
       setQuery({
         page: initialPage + 1,
-        pageSize: initialPageSize,
+        page_size: initialPageSize,
         search: term.trim() || undefined,
       });
     }
