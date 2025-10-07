@@ -1,6 +1,6 @@
 import ControlAsistente from '@/components/controls/ControlAsistente'
 import { cookies } from 'next/headers';
-import { GETControlAll, GETAsistenciaSearch } from '@/actions/feature/control-action'
+import { GETAsistenciaSearch } from '@/actions/feature/control-action'
 
 type PageProps = {
     searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -24,10 +24,10 @@ export default async function Page({ searchParams }: PageProps) {
     const data = await GETAsistenciaSearch({ token, search: search.trim(), page: page, pageSize: pageSize });
 
     return <ControlAsistente 
-        initialData={data.results} 
-        initialPage={page} 
-        initialPageSize={pageSize} 
-        initialSearch={search} 
+        initialData={data.results}
+        initialPage={page}
+        initialPageSize={pageSize}
+        initialSearch={search}
         totalPages={data.total_pages}
         totalCount={data.count}
     />

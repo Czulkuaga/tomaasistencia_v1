@@ -194,8 +194,7 @@ export default function ControlAsistente({ initialData, initialPage, initialPage
                 <button
                   onClick={handlePreviousPage}
                   disabled={isFirst && isPending}
-                  className={`flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${isFirst ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-violet-100 text-violet-600 hover:bg-violet-200"
-                    }`}
+                  className={`flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${isFirst ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-violet-100 text-violet-600 hover:bg-violet-200"}`}
                 >
                   {isPending ? "Cargando…" : "Anterior"}
                 </button>

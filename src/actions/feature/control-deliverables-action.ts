@@ -31,18 +31,15 @@ export const GETControlDeliverables = async ({ token }: { token: string }) => {
 };
 
 
-export const GETControDeliverablesAll = async ({
-  token,
-  page = 1,
-  pageSize = 10,
-}: {
-  token: string;
-  page?: number;
-  pageSize?: number;
-}) => {
+export const GETControDeliverablesAll = async ({ token, search, page, pageSize, }: { token: string; search?: string; page?: number; pageSize?: number; }) => {
+  const params = new URLSearchParams();
+  if (search) params.append("search", search);
+  if (page) params.append("page", page.toString());
+  if (pageSize) params.append("pageSize", pageSize.toString());
+
   try {
     const response = await fetch(
-      `${BASE_URL}/api/deliverable-controls/?page=${page}&page_size=${pageSize}`,
+      `${BASE_URL}/api/deliverable-controls?${params.toString()}`,
       {
         method: "GET",
         headers: {

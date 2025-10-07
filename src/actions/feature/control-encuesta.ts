@@ -63,26 +63,17 @@ export const GETControEncuestalAll = async ({
 
 
 // actions/feature/encuesta-search.ts (o donde la tengas)
-export const GETEncuestaSearch = async ({
-  token,
-  search = "",
-  event,               // 👈 nuevo opcional
-}: {
-  token: string;
-  search?: string;
-  event?: number;
-}) => {
+export const GETEncuestaSearch = async ({ token, search, event, page, pageSize }: { token: string; search?: string; event?: number; page?: number; pageSize?: number; }) => {
+  const params = new URLSearchParams();
+  if (search) params.append("search", search);
+  if (event) params.append("event", event.toString());
+  if (page) params.append("page", page.toString());
+  if (pageSize) params.append("pageSize", pageSize.toString());
+  
   try {
-    const qs = new URLSearchParams();
-    if (search) qs.set("search", search.trim());
-
-    // Enviamos ambos nombres por compatibilidad del backend
-    if (event && event > 0) {
-      qs.set("event_id", String(event));
-      qs.set("event", String(event));
-    }
-
-    const url = `${BASE_URL}/api/survey-attendance/${qs.toString() ? `?${qs.toString()}` : ""}`;
+    
+    // const url = `${BASE_URL}/api/deliverable-controls?${params.toString()}`;
+    const url = `${BASE_URL}/api/survey-attendance?${params.toString()}`;
 
     const response = await fetch(url, {
       method: "GET",

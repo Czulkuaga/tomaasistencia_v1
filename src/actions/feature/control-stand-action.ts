@@ -3,7 +3,7 @@
 const BASE_URL = process.env.SERVER_URL
 
 
-interface FormData  {
+interface FormData {
   token: string;
   attendee_id: number;
   // event_id: number;
@@ -22,7 +22,7 @@ export const GETControlStand = async ({ token }: { token: string }) => {
     });
 
     const controlstand = await response.json();
-     console.log("datos stands",controlstand)
+    console.log("datos stands", controlstand)
     return controlstand;
   } catch (error) {
     console.log("Error al hacer la peticion", error);
@@ -30,19 +30,15 @@ export const GETControlStand = async ({ token }: { token: string }) => {
   }
 };
 
+export const GETControStandlAll = async ({ token, search, page, pageSize, }: { token: string; search?: string; page?: number; pageSize?: number; }) => {
+  const params = new URLSearchParams();
+  if (search) params.append("search", search);
+  if (page) params.append("page", page.toString());
+  if (pageSize) params.append("pageSize", pageSize.toString());
 
-export const GETControStandlAll = async ({
-  token,
-  page = 1,
-  pageSize = 10,
-}: {
-  token: string;
-  page?: number;
-  pageSize?: number;
-}) => {
   try {
     const response = await fetch(
-      `${BASE_URL}/api/stand-controls/?page=${page}&page_size=${pageSize}`,
+      `${BASE_URL}/api/stand-controls?${params.toString()}`,
       {
         method: "GET",
         headers: {
@@ -68,10 +64,10 @@ export const POSTCrontolStand = async ({ token, attendee_id, stand_id, attendee_
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ attendee_id, stand_id, attendee_email  }),
+    body: JSON.stringify({ attendee_id, stand_id, attendee_email }),
   });
 
   const control = await response.json();
-  console.log("datos de stands",control)
+  console.log("datos de stands", control)
   return control;
 };
