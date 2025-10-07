@@ -1,9 +1,16 @@
 'use client'
 
-import React, { useEffect, useMemo, useState } from 'react'
-import { getCookie } from 'cookies-next'
-import { GETControlAll, GETAsistenciaSearch } from '@/actions/feature/control-action'
-import ButtonDownloadActivity from '../download-control/ButtonDownloadActivity'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import React, { useCallback, useState, useTransition } from 'react'
+
+interface ControlAsistenteProps {
+  initialData?: Control[]
+  initialPage?: number
+  initialPageSize?: number
+  initialSearch?: string
+  totalPages?: number
+  totalCount?: number
+}
 
 type Control = {
   id_asistencia: number
@@ -14,202 +21,97 @@ type Control = {
   time: string
 }
 
-type PaginationInfo = {
-  count: number
-  page: number
-  page_size: number
-  total_pages: number
-}
+export default function ControlAsistente({ initialData, initialPage, initialPageSize, initialSearch, totalPages, totalCount }: ControlAsistenteProps) {
 
-type SortDir = 'asc' | 'desc';
+  const router = useRouter();
+  const pathname = usePathname();
+  const urlSearchParams = useSearchParams();
+  const [term, setTerm] = useState(initialSearch ?? "");
+  const [isPending, startTransition] = useTransition();
 
+  // Util para construir/actualizar la querystring
+  const setQuery = useCallback(
+    (next: Record<string, string | number | undefined>) => {
+      const params = new URLSearchParams(urlSearchParams?.toString());
+      Object.entries(next).forEach(([k, v]) => {
+        if (v === undefined || v === "") params.delete(k);
+        else params.set(k, String(v));
+      });
+      startTransition(() => {
+        router.push(`${pathname}?${params.toString()}`, { scroll: false });
+      });
+    },
+    [router, pathname, urlSearchParams]
+  );
 
+  // Buscar
+  const handleSearch = useCallback(() => {
+    setQuery({
+      search: term.trim() || undefined,
+      page: 1,
+      pageSize: initialPageSize,
+    });
+  }, [term, setQuery, initialPageSize]);
 
+  // Limpiar
+  const handleClear = useCallback(() => {
+    setTerm("");
+    setQuery({ search: undefined, page: initialPage, pageSize: initialPageSize });
+  }, [setQuery, initialPageSize]);
 
-const PAGE_SIZE = 40
-
-export default function ControlAsistente() {
-  const [control, setControl] = useState<Control[]>([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-
-  const [searchTerm, setSearchTerm] = useState("");
-  const [appliedSearch, setAppliedSearch] = useState("");
-
-const [sortDir, setSortDir] = useState<SortDir>('desc'); // empieza descendente
-
-// construir el valor para DRF según la dirección
-const ordering = useMemo(
-  () => (sortDir === 'asc' ? 'date,time' : '-date,-time'),
-  [sortDir]
-);
-
-// alternar al hacer clic en Fecha/Hora
-const toggleDateTimeSort = () => setSortDir(d => (d === 'asc' ? 'desc' : 'asc'));
-const sortIcon = () => <span className="ml-1">{sortDir === 'asc' ? '▲' : '▼'}</span>;
-
-
-
-  // 🔢 Estado de paginación
-  const [currentPage, setCurrentPage] = useState(1)
-  const [paginationInfo, setPaginationInfo] = useState<PaginationInfo>({
-    count: 0,
-    page: 1,
-    page_size: PAGE_SIZE,
-    total_pages: 0,
-  })
-
-  const mapApiToControl = (r: any): Control => ({
-    id_asistencia: r.id_visita,
-    attendee_name: r.attendee_name,
-    event_name: r.event_name,
-    activity_name: r.activity_name ?? null,
-    date: r.date,
-    time: r.time,
-  })
-
-  // esto aplicamos la paginacion y el metodo de busqueda 
-  useEffect(() => {
-    const token = (getCookie("authToken") as string) ?? "";
-    if (!token) { setError("No hay token de autenticación"); return; }
-
-    let cancelled = false;
-    const load = async () => {
-      setLoading(true); setError("");
-      try {
-        // llama al endpoint de búsqueda paginada; si no, al listado normal. Ambos reciben page y pageSize para paginar del lado del servidor
-        let data: any;
-        if (appliedSearch.trim()) {
-          data = await GETAsistenciaSearch({ token, search: appliedSearch.trim(), page: currentPage, pageSize: PAGE_SIZE });
-        } else {
-          data = await GETControlAll({ token, page: currentPage, pageSize: PAGE_SIZE, ordering, });
-        }
-
-        // devuelven un arreglo directo; otros devuelven
-        const arr: any[] = Array.isArray(data) ? data : (Array.isArray(data?.results) ? data.results : []);
-        //Convierte cada item del API a tu tipo Control. Luego ordena descendentemente por fecha/hora
-        const rows = arr.map(mapApiToControl);
-        //rows.sort((a, b) => `${b.date}T${b.time}`.localeCompare(`${a.date}T${a.time}`));
-
-        if (!cancelled) {
-          setControl(rows);
-          setPaginationInfo({
-            count: Number(data?.count) || rows.length,
-            page: Number(data?.page) || currentPage,
-            page_size: Number(data?.page_size) || PAGE_SIZE,
-            total_pages: Number(data?.total_pages) ||
-              Math.max(1, Math.ceil((Number(data?.count) || rows.length) / PAGE_SIZE)),
-          });
-        }
-      } catch (e: any) {
-        if (!cancelled) setError(e?.message || "Error al consultar controles");
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
+  // Paginación
+  const handlePreviousPage = useCallback(() => {
+    if (initialPage && initialPage > 1) {
+      setQuery({
+        page: initialPage - 1,
+        pageSize: initialPageSize,
+        search: term.trim() || undefined,
+      });
     }
-    load();
-    return () => { cancelled = true }
-  }, [currentPage, appliedSearch, ordering]);
+  }, [initialPage, initialPageSize, term, setQuery]);
 
-
-
-  /// =============== todo esto es el tema descargar un excel con la informacion que hay ======================== //////////
-  // ✅ Traer TODAS las páginas para exportar
-  const getAllRows = async () => {
-    const token = (getCookie('authToken') as string) ?? ''
-    if (!token) throw new Error('No hay token')
-
-    // intenta un pageSize grande para minimizar requests
-    const PAGE_SIZE_ALL = 1000
-
-    // 1) primera página: para conocer total_pages
-    const first: any = await GETControlAll({ token, page: 1, pageSize: PAGE_SIZE_ALL })
-    const firstArr: any[] = Array.isArray(first) ? first : (Array.isArray(first?.results) ? first.results : [])
-    const acc: Control[] = firstArr.map(mapApiToControl)
-
-    const count = Number(first?.count ?? acc.length)
-    const totalPages = Number(first?.total_pages) || Math.max(1, Math.ceil(count / PAGE_SIZE_ALL))
-
-    // 2) resto de páginas en paralelo (si hay)
-    if (totalPages > 1) {
-      const promises = Array.from({ length: totalPages - 1 }, (_, i) =>
-        GETControlAll({ token, page: i + 2, pageSize: PAGE_SIZE_ALL })
-      )
-      const pages = await Promise.all(promises)
-      for (const p of pages) {
-        const arr: any[] = Array.isArray(p) ? p : (Array.isArray(p?.results) ? p.results : [])
-        acc.push(...arr.map(mapApiToControl))
-      }
+  const handleNextPage = useCallback(() => {
+    if (initialPage && totalPages && initialPage < totalPages) {
+      setQuery({
+        page: initialPage + 1,
+        pageSize: initialPageSize,
+        search: term.trim() || undefined,
+      });
     }
+  }, [initialPage, totalPages, initialPageSize, term, setQuery]);
 
-    // 3) ordenar global
-    acc.sort((a, b) => `${b.date}T${b.time}`.localeCompare(`${a.date}T${a.time}`))
-
-    // 4) shape que espera el botón/Excel
-    return acc.map(r => ({
-      event_name: r.event_name,
-      activity_name: r.activity_name,
-      attendee_name: r.attendee_name,
-      date: r.date,
-      time: r.time,
-    }))
-  }
-  ////// ====================================================================================== /////////
-
-
-
-  // 🧮 Números de página (máx 5 visibles)
-  const pageNumbers = useMemo(() => {
-    const pages: number[] = []
-    const maxPagesToShow = 5
-    let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2))
-    const endPage = Math.min(paginationInfo.total_pages, startPage + maxPagesToShow - 1)
-
-    if (endPage - startPage + 1 < maxPagesToShow) {
-      startPage = Math.max(1, endPage - maxPagesToShow + 1)
-    }
-    for (let i = startPage; i <= endPage; i++) pages.push(i)
-    return pages
-  }, [currentPage, paginationInfo.total_pages])
-
-  // ⏮️⏭️ Handlers de paginación
-  const handlePreviousPage = () => { if (currentPage > 1) setCurrentPage(p => p - 1) }
-  const handleNextPage = () => { if (currentPage < paginationInfo.total_pages) setCurrentPage(p => p + 1) }
-  const handlePageClick = (page: number) => setCurrentPage(page)
+  const isFirst = initialPage ? initialPage <= 1 : true;
+  const isLast =  initialPage &&  totalPages ? initialPage >= totalPages: true;
 
   return (
-    <section className="space-y-6 overflow-auto w-full">
+    <section className="w-[90vw] md:w-[70vw] lg:w-[78vw] xl:w-[82vw] space-y-6 overflow-auto">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <h1 className="text-xl sm:text-2xl font-bold text-purple-400 mb-2">Actividad registrados</h1>
 
         {/* 🔽 Exportar TODO */}
-        <ButtonDownloadActivity getRows={getAllRows} />
+        {/* <ButtonDownloadActivity getRows={getAllRows} /> */}
       </div>
 
       <div className="flex items-center gap-2 mb-4">
         <input
           type="text"
           placeholder="Buscar"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          value={term}
+          onChange={(e) => setTerm(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleSearch()}
           className="w-64 border border-violet-200 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-900"
         />
         <button
-          onClick={() => {
-            setCurrentPage(1);   // siempre iniciar en página 1 para nueva búsqueda
-            setAppliedSearch(searchTerm);
-          }}
-          className="px-3 py-2 rounded-md bg-violet-600 text-white text-sm hover:bg-violet-700"
+          onClick={handleSearch}
+          disabled={isPending}
+          className="px-3 py-2 rounded-md bg-violet-600 text-white text-sm hover:bg-violet-700 disabled:opacity-50"
         >
-          Buscar
+          {isPending ? "Buscando…" : "Buscar"}
         </button>
-        {(appliedSearch || searchTerm) && (
+
+        {!!term && (
           <button
-            onClick={() => {
-              setSearchTerm("");
-              setAppliedSearch("");
-              setCurrentPage(1);
-            }}
+            onClick={handleClear}
             className="px-3 py-2 rounded-md bg-gray-100 text-gray-700 text-sm hover:bg-gray-200"
           >
             Limpiar
@@ -218,10 +120,10 @@ const sortIcon = () => <span className="ml-1">{sortDir === 'asc' ? '▲' : '▼'
       </div>
 
 
-      {loading && <div className="p-3 border rounded">Cargando…</div>}
-      {!loading && error && <div className="p-3 border rounded text-red-600">{error}</div>}
+      {/* {loading && <div className="p-3 border rounded">Cargando…</div>} */}
+      {/* {!loading && error && <div className="p-3 border rounded text-red-600">{error}</div>} */}
 
-      {!loading && !error && (
+      {initialData && initialData.length > 0 && (
         <>
           <div className="w-full overflow-x-auto rounded-lg shadow">
             <table className="w-full min-w-[1100px] border border-gray-200 rounded-lg text-xs sm:text-sm shadow-sm">
@@ -233,94 +135,78 @@ const sortIcon = () => <span className="ml-1">{sortDir === 'asc' ? '▲' : '▼'
                   <th className="border p-1 text-center sm:p-2">
                     <button
                       type="button"
-                      onClick={toggleDateTimeSort}
+                      // onClick={toggleDateTimeSort}
                       className="inline-flex items-center gap-1"
                       title="Ordenar por fecha/hora"
                     >
-                      Fecha {sortIcon()}
+                      {/* Fecha {sortIcon()} */}
+                      Fecha
                     </button>
                   </th>
                   <th className="border p-1 text-center sm:p-2">
                     <button
                       type="button"
-                      onClick={toggleDateTimeSort}
+                      // onClick={toggleDateTimeSort}
                       className="inline-flex items-center gap-1"
                       title="Ordenar por fecha/hora"
                     >
-                      Hora {sortIcon()}
+                      {/* Hora {sortIcon()} */}
+                      Hora
                     </button>
                   </th>
 
                 </tr>
               </thead>
               <tbody>
-                {control.length ? (
-                  control.map((row) => (
-                    <tr key={row.id_asistencia} className="odd:bg-purple-50">
-                      <td className="border border-gray-300 p-1 text-left max-w-[150px] truncate">{row.event_name}</td>
-                      <td className="border border-gray-300 p-1 text-left max-w-[150px] truncate">{row.activity_name || '—'}</td>
-                      <td className="border border-gray-300 p-1 text-left max-w-[150px] truncate">{row.attendee_name}</td>
-                      <td className="border border-gray-300 p-1 text-left max-w-[150px] truncate">{row.date}</td>
-                      <td className="border border-gray-300 p-1 text-left max-w-[150px] truncate">{row.time}</td>
+                {
+                  initialData && initialData.length > 0 ? (
+                    initialData.map((row) => (
+                      <tr key={row.id_asistencia} className="odd:bg-purple-50">
+                        <td className="border border-gray-300 p-1 text-left max-w-[150px] truncate">{row.event_name}</td>
+                        <td className="border border-gray-300 p-1 text-left max-w-[150px] truncate">{row.activity_name || '—'}</td>
+                        <td className="border border-gray-300 p-1 text-left max-w-[150px] truncate">{row.attendee_name}</td>
+                        <td className="border border-gray-300 p-1 text-left max-w-[150px] truncate">{row.date}</td>
+                        <td className="border border-gray-300 p-1 text-left max-w-[150px] truncate">{row.time}</td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={5} className="px-3 py-4 text-center text-red-500">
+                        No hay registros de control.
+                      </td>
                     </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={5} className="px-3 py-4 text-center text-red-500">
-                      No hay registros de control.
-                    </td>
-                  </tr>
-                )}
+                  )
+                }
               </tbody>
             </table>
           </div>
 
           {/* 🔽 Paginador */}
-          {paginationInfo.total_pages > 1 && (
+          {/* Paginador (usar props del SSR) */}
+          {totalPages && totalPages > 1 && (
             <div className="flex flex-col sm:flex-row justify-between items-center mt-6 gap-4">
               <div className="text-sm text-gray-600">
-                Página {paginationInfo.page} de {paginationInfo.total_pages} · {paginationInfo.count} registros
+                Página {initialPage} de {totalPages}
+                {typeof totalCount === "number" ? <> · {totalCount} registros</> : null}
               </div>
 
               <div className="flex items-center gap-2">
-                {/* Botón Anterior */}
                 <button
                   onClick={handlePreviousPage}
-                  disabled={currentPage === 1}
-                  className={`flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${currentPage === 1
-                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                    : 'bg-violet-100 text-violet-600 hover:bg-violet-200'
+                  disabled={isFirst && isPending}
+                  className={`flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${isFirst ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-violet-100 text-violet-600 hover:bg-violet-200"
                     }`}
                 >
-                  Anterior
+                  {isPending ? "Cargando…" : "Anterior"}
                 </button>
 
-                {/* Números de página */}
-                <div className="flex gap-1">
-                  {pageNumbers.map((page) => (
-                    <button
-                      key={page}
-                      onClick={() => handlePageClick(page)}
-                      className={`w-8 h-8 rounded-md text-sm font-medium transition-colors ${page === currentPage
-                        ? 'bg-violet-500 text-white'
-                        : 'bg-gray-100 text-gray-600 hover:bg-violet-100 hover:text-violet-600'
-                        }`}
-                    >
-                      {page}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Botón Siguiente */}
                 <button
                   onClick={handleNextPage}
-                  disabled={currentPage === paginationInfo.total_pages}
-                  className={`flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${currentPage === paginationInfo.total_pages
-                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                    : 'bg-violet-100 text-violet-600 hover:bg-violet-200'
+                  disabled={isLast && isPending}
+                  className={`flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${isLast ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-violet-100 text-violet-600 hover:bg-violet-200"
                     }`}
                 >
-                  Siguiente
+                  {isPending ? "Cargando…" : "Siguiente"}
                 </button>
               </div>
             </div>

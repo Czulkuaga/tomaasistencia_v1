@@ -14,7 +14,6 @@ function takeFirst(v: string | string[] | undefined): string | undefined {
 }
 
 export default async function PageEvent({ searchParams }: PageProps) {
-  // 👇 Obligatorio en Next 15
   const params = await searchParams;
 
   const page = Number(takeFirst(params.page)) || 1;
