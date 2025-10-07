@@ -170,8 +170,9 @@ export default function AnswerSurvey({ surveyId }: { surveyId: string }) {
     };
 
     const missingQuestions = useMemo(
+
         () => (survey ? survey.questions.filter((q) => !isQuestionAnswered(q)) : []),
-        [survey, answers]
+        [survey]
     );
     const isComplete = missingQuestions.length === 0;
 

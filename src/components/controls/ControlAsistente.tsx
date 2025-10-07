@@ -57,7 +57,7 @@ export default function ControlAsistente({ initialData, initialPage, initialPage
   const handleClear = useCallback(() => {
     setTerm("");
     setQuery({ search: undefined, page: initialPage, pageSize: initialPageSize });
-  }, [setQuery, initialPageSize]);
+  }, [setQuery, initialPageSize, initialPage]);
 
   // Paginación
   const handlePreviousPage = useCallback(() => {

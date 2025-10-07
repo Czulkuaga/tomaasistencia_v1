@@ -46,6 +46,32 @@ export default function ModalEditEvent({
     is_active: false,
   });
 
+  useEffect(() => {
+    if (event) {
+      setEventState({
+        name: event.name ?? "",
+        description: event.description ?? "",
+        country: event.country ?? "",
+        state: event.state ?? "",
+        city: event.city ?? "",
+        address: event.address ?? "",
+        start_date: event.start_date ?? "",
+        end_date: event.end_date ?? "",
+        start_time: event.start_time ?? "",
+        end_time: event.end_time ?? "",
+        is_active: !!event.is_active,
+      });
+    }
+
+  }, [event, isOpen]);
+
+  // Cerrar con ESC
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
   if (!isOpen || !event) return null;
 
   function handleChange(
@@ -65,30 +91,6 @@ export default function ModalEditEvent({
     setEventState((prev) => ({ ...prev, [name]: value as never }));
   }
 
-  useEffect(() => {
-    if (!event) return;
-    setEventState({
-      name: event.name ?? "",
-      description: event.description ?? "",
-      country: event.country ?? "",
-      state: event.state ?? "",
-      city: event.city ?? "",
-      address: event.address ?? "",
-      start_date: event.start_date ?? "",
-      end_date: event.end_date ?? "",
-      start_time: event.start_time ?? "",
-      end_time: event.end_time ?? "",
-      is_active: !!event.is_active,
-    });
-  }, [event, isOpen]);
-
-  // Cerrar con ESC
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
-
   // Previene que el click en el panel cierre el modal
   const stop = (e: React.MouseEvent) => e.stopPropagation();
 
@@ -103,7 +105,7 @@ export default function ModalEditEvent({
       if (!res.ok) {
         throw new Error(`Error al actualizar el evento: ${res.status} ${res.error}`);
       }
-      console.log("Update Event Response", res );
+      console.log("Update Event Response", res);
     } catch (error) {
       console.error("Error al actualizar el evento", error);
     }

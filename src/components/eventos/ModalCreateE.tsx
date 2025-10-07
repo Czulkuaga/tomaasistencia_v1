@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { getCookie } from "cookies-next";
-import { POSTCreateEvent } from "@/actions/feature/event-action"
+// import { POSTCreateEvent } from "@/actions/feature/event-action"
 
 interface ModalProps {
   isOpen: boolean;
@@ -75,11 +75,11 @@ export default function ModalCreate({
     if (Object.keys(newErrors).length === 0) {
       try {
         const token = (getCookie("authToken") as string) || "";
-        const res = await POSTCreateEvent({ ...formData, token });
+        // const res = await POSTCreateEvent({ ...formData, token });
 
-        if (res.error) {
-          return setErrors({ formError: res.error });
-        }
+        // if (res.error) {
+        //   return setErrors({ formError: res.error });
+        // }
 
         setFormData(initialData);
         onClose();
