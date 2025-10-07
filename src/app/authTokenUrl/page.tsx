@@ -21,7 +21,7 @@ const AuthPage = () => {
       // console.log("Refresh guardado:", refresh);
 
       // Redirigir al usuario a la pantalla principal
-      router.replace("/dashboard/evento/");
+      router.replace("/dashboard/evento/?page=1&pageSize=20");
     } else {
       console.warn("No se encontró un token válido en la URL.");
     }

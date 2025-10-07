@@ -42,7 +42,7 @@ export default async function DashboardLayout({
   const fromColor = isQA ? "from-black" : "from-violet-600";
   
   return (
-    <main className="flex bg-zinc-50 min-h-screen font-sans overflow-auto">
+    <main className="flex bg-zinc-50 min-h-screen font-sans overflow-x-hidden">
 
        <Sidebar username={username} fromColor={fromColor} />
       {/* Contenedor del contenido */}
