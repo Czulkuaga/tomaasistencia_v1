@@ -63,12 +63,12 @@ export const GETControEncuestalAll = async ({
 
 
 // actions/feature/encuesta-search.ts (o donde la tengas)
-export const GETEncuestaSearch = async ({ token, search, event, page, pageSize }: { token: string; search?: string; event?: number; page?: number; pageSize?: number; }) => {
+export const GETEncuestaSearch = async ({ token, search, event, page, page_size }: { token: string; search?: string; event?: number; page?: number; page_size?: number; }) => {
   const params = new URLSearchParams();
   if (search) params.append("search", search);
   if (event) params.append("event", event.toString());
   if (page) params.append("page", page.toString());
-  if (pageSize) params.append("pageSize", pageSize.toString());
+  if (page_size) params.append("page_size", page_size.toString());
   
   try {
     

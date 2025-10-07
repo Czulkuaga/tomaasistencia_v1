@@ -16,20 +16,20 @@ export default async function Page({ searchParams }: PageProps) {
     const params = await searchParams;
 
     const page = Number(takeFirst(params.page)) || 1;
-    const pageSize = Number(takeFirst(params.pageSize)) || 20;
+    const page_size = Number(takeFirst(params.page_size)) || 20;
     const search = takeFirst(params.search) || "";
     const event = Number(takeFirst(params.pageSize)) || undefined;
 
     const cookieStore = await cookies();
     const token = cookieStore.get("authToken")?.value ?? "";
 
-    const data = await GETEncuestaSearch({ token, search: search.trim(), event: event, page: page, pageSize: pageSize });
+    const data = await GETEncuestaSearch({ token, search: search.trim(), event: event, page: page, page_size: page_size });
 
     return <ControlEncuesta 
-        initialData={data.results} 
-        initialPage={page} 
-        initialPageSize={pageSize} 
-        initialSearch={search} 
+        initialData={data.results}
+        initialPage={page}
+        initialPageSize={page_size}
+        initialSearch={search}
         totalPages={data.total_pages}
         totalCount={data.count}
     />
