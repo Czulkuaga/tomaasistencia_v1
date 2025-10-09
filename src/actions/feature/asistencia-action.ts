@@ -75,8 +75,7 @@ export const GETAsistenciaSearch = async ({
 }) => {
   try {
     const response = await fetch(
-      `${BASE_URL}/api/attendees/${
-        search ? `?search=${encodeURIComponent(search)}` : ""
+      `${BASE_URL}/api/attendees/${search ? `?search=${encodeURIComponent(search)}` : ""
       }`,
       {
         method: "GET",
@@ -94,9 +93,6 @@ export const GETAsistenciaSearch = async ({
     return { results: [] };
   }
 };
-
-
-
 
 //METODO POST
 
@@ -119,13 +115,44 @@ export const POSTCreateAsiste = async ({
         body: JSON.stringify(data),
       }
     );
-    console.log("datos del asistente",response)
+    console.log("datos del asistente", response)
     return await response.json();
   } catch (error) {
     console.error(error);
     return { error: "No se pudo crear el asistente" };
   }
 };
+
+//POST PUBLIC ASISTENTE
+
+export const POSTCreatePublicAttendee = async ({ data, }: { data: AttendeeCreate; }) => {
+
+  try {
+    const response = await fetch(
+      `${BASE_URL}/api/public-attendees/`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data),
+      }
+    );
+
+    const responseData = await response.json();
+
+    console.log("Respuesta del servidor:", response.status, responseData);
+
+    if (!response.ok) {
+      return { status: response.status, data: responseData };
+    } else {
+      return { status: response.status, data: responseData };
+    }
+  } catch (error) {
+    console.error(error);
+    return { error: "No se pudo crear el asistente" };
+  }
+}
 
 // METODO PUT
 

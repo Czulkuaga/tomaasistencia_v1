@@ -49,6 +49,25 @@ export async function GETEventsAll({
   };
 }
 
+export async function getEventPublic(id_event: number) {
+  // console.log("getEventPublic id_event:", id_event);
+  const res = await fetch(`${BASE_URL}/api/events/event-info?id=${id_event}`, {
+    headers: {
+      "Content-Type": "application/json"
+    }
+  });
+
+  if (!res.ok) {
+    throw new Error(`getEventPublic failed: ${res.status} ${res.statusText}`);
+  }
+
+  const data = await res.json();
+
+  // console.log("getEventPublic data:", data);
+
+  return data
+}
+
 export async function PATCHEvent(
   id_event: number,
   token: string,

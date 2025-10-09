@@ -3,11 +3,12 @@ import { useState, useEffect } from "react";
 import { getCookie } from "cookies-next";
 import { POSTCreateAsiste } from "@/actions/feature/asistencia-action"
 import { GETEvents } from "@/actions/feature/event-action"
+import { useRouter } from "next/navigation";
 
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
-  refreshTypes: () => void;
+  token: string;
 }
 
 interface Asistente {
@@ -63,8 +64,10 @@ const ASISTENCIA_OPTIONS = [{ value: "PRESENCIAL" }, { value: "VIRTUAL" }];
 export default function ModalAsisten({
   isOpen,
   onClose,
-  refreshTypes,
+  token
 }: ModalProps) {
+
+  const route = useRouter();
 
   const [formData, setFormData] = useState<Asistente>(initialData);
   const [errors, setErrors] = useState<FormErrors>({})
@@ -75,7 +78,6 @@ export default function ModalAsisten({
     if (isOpen) {
       const fetchEvents = async () => {
         try {
-          const token = (getCookie("authToken") as string) || "";
           const res = await GETEvents({ token });
           if (res && Array.isArray(res.results)) {
             setEvents(res.results);
@@ -90,16 +92,16 @@ export default function ModalAsisten({
 
 
   const inputChangeHandler = (
-  e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-) => {
-  setErrors({});
-  const { name, value } = e.target;
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
+    setErrors({});
+    const { name, value } = e.target;
 
-  setFormData(prev => ({
-    ...prev,
-    [name]: value
-  }));
-};
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
 
 
 
@@ -112,9 +114,9 @@ export default function ModalAsisten({
     if (formData.email === "") newErrors.email = 'El Correo es obligatorio';
 
     if (Object.keys(newErrors).length === 0) {
-      
-      const newformData = { ...formData, email: formData.email?.toLowerCase()}
-      console.log("datos",newformData)
+
+      const newformData = { ...formData, email: formData.email?.toLowerCase() }
+      console.log("datos", newformData)
       try {
         const token = (getCookie("authToken") as string) || "";
         // ✅ pasa el payload dentro de "data"
@@ -127,7 +129,7 @@ export default function ModalAsisten({
 
         setFormData(initialData);
         onClose();
-        refreshTypes();
+        route.refresh();
 
       } catch (error: unknown) {
         console.error("Error en la solicitud:", error);
@@ -142,7 +144,6 @@ export default function ModalAsisten({
       setErrors(newErrors);
     }
   }
-
 
   return (
 

@@ -1,7 +1,7 @@
 "use client"
 import { useState, useEffect, useCallback, useTransition } from 'react'
 import { getCookie } from "cookies-next";
-import { GETAsistenciaSearch, DELETEAsistencia, PUTAsistencia } from "@/actions/feature/asistencia-action"
+import { DELETEAsistencia, PUTAsistencia } from "@/actions/feature/asistencia-action"
 import { GETEvents } from "@/actions/feature/event-action"
 import { MdDelete } from "react-icons/md";
 import { IoQrCode } from "react-icons/io5";
@@ -19,6 +19,7 @@ interface AsistenteProps {
   totalPages?: number
   totalCount?: number
   initialEvent?: number | undefined
+  token: string
 }
 
 interface Asistencia {
@@ -39,17 +40,10 @@ interface Asistencia {
   is_active?: boolean;
   asistencia?: string;
 }
-interface PaginationInfo {
-  count: number;
-  page: number;
-  page_size: number;
-  total_pages: number;
-}
 
 const ASISTENCIA_OPTIONS = [{ value: "PRESENCIAL" }, { value: "VIRTUAL" }];
-type SortDir = 'asc' | 'desc';
 
-export default function Asisten({ initialData, initialPage, initialPageSize, initialSearch, totalPages, totalCount, initialEvent }: AsistenteProps) {
+export default function Asisten({ initialData, initialPage, initialPageSize, initialSearch, totalPages, totalCount, initialEvent, token }: AsistenteProps) {
 
   const router = useRouter();
   const pathname = usePathname();
@@ -249,12 +243,6 @@ export default function Asisten({ initialData, initialPage, initialPageSize, ini
         </div>
 
       </div>
-
-      {/* <ModalAsisten
-        isOpen={isCreateProdu}
-        onClose={() => setIsCreateProdu(false)}
-        refreshTypes={GetAsistente} // ✅ Pasamos la función de refresco
-      /> */}
 
       <div className="w-full overflow-x-auto rounded-lg shadow">
         <table className="w-full min-w-[1100px] border border-gray-200 rounded-lg text-xs sm:text-sm shadow-sm">
@@ -616,6 +604,12 @@ export default function Asisten({ initialData, initialPage, initialPageSize, ini
           </div>
         </div>
       )}
+
+      <ModalAsisten
+        isOpen={isCreateProdu}
+        onClose={() => setIsCreateProdu(false)}
+        token={token}
+      />
     </section>
   )
 }

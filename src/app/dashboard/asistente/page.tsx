@@ -41,6 +41,7 @@ export default async function pageAsistente({ searchParams }: PageProps) {
             totalPages={data.total_pages}
             totalCount={data.count}
             initialEvent={eventId}
+            token={token}
         />
     )
 }
