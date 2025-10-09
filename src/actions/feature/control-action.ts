@@ -81,13 +81,14 @@ export const GETControlAll = async ({
 
 
 //metodo get de busqueda
-export const GETAsistenciaSearch = async ({token,search,page,page_size}: {token: string;search?: string;page?: number;page_size?: number;}) => {
+export const GETAsistenciaSearch = async ({token,search,page,page_size, event}: {token: string;search?: string;page?: number;page_size?: number; event?: number;}) => {
   try {
 
     const params = new URLSearchParams();
     if (search) params.append("search", search);
     if (page) params.append("page", page.toString());
     if (page_size) params.append("page_size", page_size.toString());
+    if (event) params.append("event", event.toString());
 
     const response = await fetch(
       `${BASE_URL}/api/controls?${params.toString()}`,

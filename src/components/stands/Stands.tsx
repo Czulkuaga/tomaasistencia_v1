@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useTransition } from 'react'
 import { getCookie } from "cookies-next";
 import { GETStandsAll, DELETEStands, PATCHStands, GETAsistenciaSearch } from "@/actions/feature/stands-action"
 import { GETEvents } from "@/actions/feature/event-action"
@@ -11,7 +11,18 @@ import { GETEncuesta } from "@/actions/survey/survey-action"
 import QRCode from 'react-qr-code';
 import ModalVista from "@/components/stands/ModalVista"
 import { IoEye } from "react-icons/io5";
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { EventSelector } from '../ui/EventSelector';
 
+interface ControlAsistenteProps {
+    initialData?: Stands[]
+    initialPage?: number
+    initialPageSize?: number
+    initialSearch?: string
+    totalPages?: number
+    totalCount?: number
+    initialEvent?: number | undefined
+}
 
 interface Stands {
     id_stand?: number
@@ -41,7 +52,13 @@ interface PaginationInfo {
 
 const REGISTER_URL = process.env.NEXT_PUBLIC_REGISTER_URL ?? "";
 
-export default function Stands() {
+export default function Stands({ initialData, initialPage, initialPageSize, initialSearch, totalPages, totalCount, initialEvent }: ControlAsistenteProps) {
+
+    const router = useRouter();
+    const pathname = usePathname();
+    const urlSearchParams = useSearchParams();
+    const [term, setTerm] = useState(initialSearch ?? "");
+    const [isPending, startTransition] = useTransition();
 
     const [stand, setStand] = useState<Stands[]>([]);
     const [idevent, setIdEvent] = useState<{ id_event: number; name: string }[]>([]);
@@ -53,73 +70,118 @@ export default function Stands() {
     const [qrValue, setQrValue] = useState<string>('');
     const [vista, setVista] = useState(false);
 
-
-    // todo el tema de la paginacion
-    const [currentPage, setCurrentPage] = useState(1);
-    const [pageSize] = useState(15);
-    const [paginationInfo, setPaginationInfo] = useState<PaginationInfo>({
-        count: 0,
-        page: 1,
-        page_size: 15,
-        total_pages: 0
-    });
-
-    // boton de busqueda
-    const [searchTerm, setSearchTerm] = useState("");
-    const [appliedSearch, setAppliedSearch] = useState("");
-
     // para contar el numero de caracteres de la descripcion
     const [contador, setContador] = useState<number>(selectedStands?.description?.length ?? 0);
     const [contadorname, setContadorName] = useState<number>(selectedStands?.name?.length ?? 0);
     const [contadorempresa, setContadorEmpresa] = useState<number>(selectedStands?.company_name?.length ?? 0);
     const [contadorlugar, setContadorLugar] = useState<number>(selectedStands?.location?.length ?? 0);
 
+    // Util para construir/actualizar la querystring
+    const setQuery = useCallback(
+        (next: Record<string, string | number | undefined>) => {
+            const params = new URLSearchParams(urlSearchParams?.toString());
+            Object.entries(next).forEach(([k, v]) => {
+                if (v === undefined || v === "") params.delete(k);
+                else params.set(k, String(v));
+            });
+            startTransition(() => {
+                router.push(`${pathname}?${params.toString()}`, { scroll: false });
+            });
+        },
+        [router, pathname, urlSearchParams]
+    );
 
+    // Buscar
+    const handleSearch = useCallback(() => {
+        setQuery({
+            search: term.trim() || undefined,
+            page: 1,
+            pageSize: initialPageSize,
+            event: initialEvent || undefined,  // 👈 aquí va
+        });
+    }, [term, initialEvent, setQuery, initialPageSize]);
 
+    // Limpiar: quita search, conserva (o resetea) event
+    const handleClear = useCallback(() => {
+        setTerm("");
+        setQuery({
+            search: undefined,
+            page: 1,
+            pageSize: initialPageSize,
+            event: initialEvent || undefined,  // 👈 mantiene filtro de evento
+        });
+    }, [initialEvent, setQuery, initialPageSize]);
 
-
-    const GetAsistente = useCallback(async () => {
-        try {
-            const token = getCookie("authToken") as string ?? "";
-
-            if (!token) {
-                console.error("No hay un token válido");
-                return;
-            }
-
-            let response: any;
-
-            if (appliedSearch.trim().length > 0) {
-                response = await GETAsistenciaSearch({ token, search: appliedSearch.trim() });
-
-                const results = Array.isArray(response) ? response : (response.results ?? []);
-                setStand(results);
-
-                setPaginationInfo({
-                    count: Array.isArray(response) ? response.length : (response.count ?? results.length),
-                    page: 1,
-                    page_size: results.length,
-                    total_pages: 1,
-                });
-
-            } else {
-                const response = await GETStandsAll({ token, page: currentPage, pageSize, });
-                setStand(response.results);
-                console.log("arriba", response)
-                setPaginationInfo({
-                    count: response.count,
-                    page: response.page,
-                    page_size: response.page_size,
-                    total_pages: response.total_pages
-                })
-
-            }
-
-
-        } catch (error) {
-            console.error("Error fetching products:", error);
+    // Paginación
+    const handlePreviousPage = useCallback(() => {
+        if (initialPage && initialPage > 1) {
+            setQuery({
+                page: initialPage - 1,
+                pageSize: initialPageSize,
+                search: term.trim() || undefined,
+                event: initialEvent || undefined, // 👈
+            });
         }
-    }, [currentPage, pageSize, appliedSearch])
+    }, [initialPage, initialPageSize, term, initialEvent, setQuery]);
+
+    const handleNextPage = useCallback(() => {
+        if (initialPage && totalPages && initialPage < totalPages) {
+            setQuery({
+                page: initialPage + 1,
+                pageSize: initialPageSize,
+                search: term.trim() || undefined,
+                event: initialEvent || undefined, // 👈
+            });
+        }
+    }, [initialPage, totalPages, initialPageSize, term, initialEvent, setQuery]);
+
+    const isFirst = initialPage ? initialPage <= 1 : true;
+    const isLast = initialPage && totalPages ? initialPage >= totalPages : true;
+
+
+
+    // const GetAsistente = useCallback(async () => {
+    //     try {
+    //         const token = getCookie("authToken") as string ?? "";
+
+    //         if (!token) {
+    //             console.error("No hay un token válido");
+    //             return;
+    //         }
+
+    //         let response: any;
+
+    //         if (appliedSearch.trim().length > 0) {
+    //             response = await GETAsistenciaSearch({ token, search: appliedSearch.trim() });
+
+    //             const results = Array.isArray(response) ? response : (response.results ?? []);
+    //             setStand(results);
+
+    //             setPaginationInfo({
+    //                 count: Array.isArray(response) ? response.length : (response.count ?? results.length),
+    //                 page: 1,
+    //                 page_size: results.length,
+    //                 total_pages: 1,
+    //             });
+
+    //         } else {
+    //             const response = await GETStandsAll({ token, page: currentPage, pageSize, });
+    //             setStand(response.results);
+    //             console.log("arriba", response)
+    //             setPaginationInfo({
+    //                 count: response.count,
+    //                 page: response.page,
+    //                 page_size: response.page_size,
+    //                 total_pages: response.total_pages
+    //             })
+
+    //         }
+
+
+    //     } catch (error) {
+    //         console.error("Error fetching products:", error);
+    //     }
+    // }, [initialPage, totalPages, appliedSearch])
 
     const GetEventosList = async () => {
         try {
@@ -146,49 +208,14 @@ export default function Stands() {
 
 
     useEffect(() => {
-        GetAsistente();
+        // GetAsistente();
         GetEventosList();
         GetEncuestaList();
-    }, [GetAsistente])
+    }, [])
 
     useEffect(() => {
         setContador(selectedStands?.description?.length ?? 0);
     }, [selectedStands]);
-
-    // Funciones de paginación
-    const handlePreviousPage = () => {
-        if (currentPage > 1) {
-            setCurrentPage(currentPage - 1);
-        }
-    };
-
-    const handleNextPage = () => {
-        if (currentPage < paginationInfo.total_pages) {
-            setCurrentPage(currentPage + 1);
-        }
-    };
-
-    const handlePageClick = (page: number) => {
-        setCurrentPage(page);
-    };
-
-    // Generar números de página para mostrar
-    const getPageNumbers = () => {
-        const pages = [];
-        const maxPagesToShow = 5;
-        let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2)); // ← let porque se reasigna abajo
-        const endPage = Math.min(paginationInfo.total_pages, startPage + maxPagesToShow - 1);
-
-        if (endPage - startPage + 1 < maxPagesToShow) {
-            startPage = Math.max(1, endPage - maxPagesToShow + 1);
-        }
-
-        for (let i = startPage; i <= endPage; i++) {
-            pages.push(i);
-        }
-
-        return pages;
-    };
 
 
     // metodo de eliminar
@@ -201,7 +228,6 @@ export default function Stands() {
             console.error("No se pudo eliminar el stand");
         }
     };
-
 
     // metodo de actulizar
     const handleUpdate = async (id_stand: number, updatedData: FormData) => {
@@ -231,57 +257,64 @@ export default function Stands() {
         setQrModalOpen(true);
     }
 
-
     return (
-        <section className="space-y-6 overflow-auto w-full">
-             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-        <button
-          className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-400 text-md font-bold"
-          onClick={() => setIsCreateProdu(true)}
-        >
-          + Crear Stands
-        </button>
+        <section className="w-[90vw] md:w-[70vw] lg:w-[78vw] xl:w-[82vw] space-y-6 overflow-auto">
+            <div className="flex flex-col gap-3">
+                <h1 className="text-xl sm:text-2xl font-bold text-purple-400 mb-2">Actividades</h1>
+                <p className="text-gray-500 text-sm sm:text-base">
+                    ¡Puedes ingresar tus actividades para tu proximo evento!
+                </p>
 
-        <div className="flex items-center gap-2">
-          <input
-            type="text"
-            placeholder="Buscar"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}  // ← no dispara búsqueda
-            // si NO quieres que Enter busque, no agregues onKeyDown
-            className="w-56 sm:w-72 border border-violet-200 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-900"
-          />
-          <button
-            onClick={() => {
-              setCurrentPage(1);
-              setAppliedSearch(searchTerm); // ← aquí “se aplica” la búsqueda
-            }}
-            className="px-3 py-2 rounded-md bg-violet-600 text-white text-sm hover:bg-violet-700"
-            title="Buscar"
-          >
-            Buscar
-          </button>
-          {(appliedSearch || searchTerm) && (
-            <button
-              onClick={() => {
-                setSearchTerm("");
-                setAppliedSearch("");   // ← limpia búsqueda
-                setCurrentPage(1);
-              }}
-              className="px-3 py-2 rounded-md bg-gray-100 text-gray-700 text-sm hover:bg-gray-200"
-              title="Limpiar"
-            >
-              Limpiar
-            </button>
-          )}
-        </div>
-      </div>
+                <div className='w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3'>
+                    <button
+                        className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-400 text-md font-bold"
+                        onClick={() => setIsCreateProdu(true)}
+                    >
+                        + Crear Stands
+                    </button>
 
-            <ModalStand
+                    <div className="flex items-center flex-col md:flex-row gap-2 mb-4">
+                        <EventSelector
+                            options={idevent.map(e => ({ id: e.id_event, name: e.name }))}
+                            initialValue={initialEvent}
+                        />
+
+                        <div>
+                            <input
+                                type="text"
+                                placeholder="Buscar"
+                                value={term}
+                                onChange={(e) => setTerm(e.target.value)}
+                                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                                className="w-64 border border-violet-200 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-900"
+                            />
+                            <button
+                                onClick={handleSearch}
+                                disabled={isPending}
+                                className="px-3 py-2 rounded-md bg-violet-600 text-white text-sm hover:bg-violet-700 disabled:opacity-50"
+                            >
+                                {isPending ? "Buscando…" : "Buscar"}
+                            </button>
+
+                            {!!term && (
+                                <button
+                                    onClick={handleClear}
+                                    className="px-3 py-2 rounded-md bg-gray-100 text-gray-700 text-sm hover:bg-gray-200"
+                                >
+                                    Limpiar
+                                </button>
+                            )}
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            {/* <ModalStand
                 isOpen={isCreateProdu}
                 onClose={() => setIsCreateProdu(false)}
                 refreshTypes={GetAsistente} // 
-            />
+            /> */}
 
             <ModalVista isOpen={vista} onClose={() => setVista(false)} stand={selectedStands} />
 
@@ -300,8 +333,8 @@ export default function Stands() {
                         </tr>
                     </thead>
                     <tbody className="">
-                        {Array.isArray(stand) && stand.length > 0 ? (
-                            stand.map((stad, idx) => (
+                        {initialData && initialData.length > 0 ? (
+                            initialData.map((stad, idx) => (
                                 <tr key={stad.id_stand} className={idx % 2 === 0 ? "bg-white hover:bg-purple-100 transition border border-gray-50" : "bg-gray-100 hover:bg-purple-100 transition border border-gray-400"}>
                                     <td className="border border-gray-300 p-1 text-left max-w-[150px] truncate">{idevent.find(e => Number(e.id_event) === Number(stad.event))?.name || "-"}</td>
                                     <td className="border border-gray-300 p-1 text-left max-w-[150px] truncate">{stad.name}</td>
@@ -362,53 +395,31 @@ export default function Stands() {
             </div>
 
 
-            {paginationInfo.total_pages > 1 && (
+            {/* 🔽 Paginador */}
+            {/* Paginador (usar props del SSR) */}
+            {totalPages && totalPages > 1 && (
                 <div className="flex flex-col sm:flex-row justify-between items-center mt-6 gap-4">
                     <div className="text-sm text-gray-600">
-                        Página {paginationInfo.page} de {paginationInfo.total_pages}
+                        Página {initialPage} de {totalPages}
+                        {typeof totalCount === "number" ? <> · {totalCount} registros</> : null}
                     </div>
 
                     <div className="flex items-center gap-2">
-                        {/* Botón Anterior */}
                         <button
                             onClick={handlePreviousPage}
-                            disabled={currentPage === 1}
-                            className={`flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${currentPage === 1
-                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                : 'bg-violet-100 text-violet-600 hover:bg-violet-200'
-                                }`}
+                            disabled={isFirst && isPending}
+                            className={`flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${isFirst ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-violet-100 text-violet-600 hover:bg-violet-200"}`}
                         >
-
-                            Anterior
+                            {isPending ? "Cargando…" : "Anterior"}
                         </button>
 
-                        {/* Números de página */}
-                        <div className="flex gap-1">
-                            {getPageNumbers().map((page) => (
-                                <button
-                                    key={page}
-                                    onClick={() => handlePageClick(page)}
-                                    className={`w-8 h-8 rounded-md text-sm font-medium transition-colors ${page === currentPage
-                                        ? 'bg-violet-500 text-white'
-                                        : 'bg-gray-100 text-gray-600 hover:bg-teak-100 hover:text-violet-600'
-                                        }`}
-                                >
-                                    {page}
-                                </button>
-                            ))}
-                        </div>
-
-                        {/* Botón Siguiente */}
                         <button
                             onClick={handleNextPage}
-                            disabled={currentPage === paginationInfo.total_pages}
-                            className={`flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${currentPage === paginationInfo.total_pages
-                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                : 'bg-violet-100 text-violet-600 hover:bg-violet-200'
+                            disabled={isLast && isPending}
+                            className={`flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${isLast ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-violet-100 text-violet-600 hover:bg-violet-200"
                                 }`}
                         >
-                            Siguiente
-
+                            {isPending ? "Cargando…" : "Siguiente"}
                         </button>
                     </div>
                 </div>
@@ -428,7 +439,6 @@ export default function Stands() {
                             formData.set('is_scoring', selectedStands?.is_scoring ? 'true' : 'false');
                             handleUpdate(selectedStands.id_stand!, formData);
                             setEditModal(false);
-                            GetAsistente();
                         }}
 
                         className="
@@ -680,7 +690,6 @@ export default function Stands() {
             )}
 
         </section>
-
 
     )
 }

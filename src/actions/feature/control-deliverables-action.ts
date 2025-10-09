@@ -31,11 +31,12 @@ export const GETControlDeliverables = async ({ token }: { token: string }) => {
 };
 
 
-export const GETControDeliverablesAll = async ({ token, search, page, pageSize, }: { token: string; search?: string; page?: number; pageSize?: number; }) => {
+export const GETControDeliverablesAll = async ({ token, search, page, pageSize,event }: { token: string; search?: string; page?: number; pageSize?: number; event?: number; }) => {
   const params = new URLSearchParams();
   if (search) params.append("search", search);
   if (page) params.append("page", page.toString());
   if (pageSize) params.append("pageSize", pageSize.toString());
+  if (event) params.append("event", event.toString());
 
   try {
     const response = await fetch(

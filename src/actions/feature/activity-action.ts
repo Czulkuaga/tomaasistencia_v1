@@ -49,7 +49,7 @@ export const GETActivityPublic = async (atv: number) => {
     });
     // console.log(response)
     const actividad = await response.json();
-    console.log("datos",actividad)
+    console.log("datos", actividad)
     return actividad;
   } catch (error) {
     console.log("Error al hacer la peticion", error);
@@ -59,18 +59,17 @@ export const GETActivityPublic = async (atv: number) => {
 
 
 //paginacion de get
-export const GETActivityAll = async ({
-  token,
-  page = 1,
-  pageSize = 10,
-}: {
-  token: string;
-  page?: number;
-  pageSize?: number;
-}) => {
+export const GETActivityAll = async ({ token, search, page, page_size, event }: { token: string; search?: string; page?: number; page_size?: number; event?: number; }) => {
+
+  const params = new URLSearchParams();
+  if (search) params.append("search", search);
+  if (page) params.append("page", page.toString());
+  if (page_size) params.append("page_size", page_size.toString());
+  if (event) params.append("event", event.toString());
+
   try {
     const response = await fetch(
-      `${BASE_URL}/api/activities/?page=${page}&page_size=${pageSize}`,
+      `${BASE_URL}/api/activities?${params.toString()}`,
       {
         method: "GET",
         headers: {
@@ -99,8 +98,7 @@ export const GETAsistenciaSearch = async ({
 }) => {
   try {
     const response = await fetch(
-      `${BASE_URL}/api/activities/${
-        search ? `?search=${encodeURIComponent(search)}` : ""
+      `${BASE_URL}/api/activities/${search ? `?search=${encodeURIComponent(search)}` : ""
       }`,
       {
         method: "GET",
@@ -145,7 +143,7 @@ export const POSTCreateActivity = async (formData: FormData) => {
 
 // METODO PUT
 
-export const PUTActivity = async (id_actividad: number,token: string,updatedData: Record<string, unknown>) => {
+export const PUTActivity = async (id_actividad: number, token: string, updatedData: Record<string, unknown>) => {
   try {
     const response = await fetch(
       `${BASE_URL}/api/activities/${id_actividad}/`,
@@ -161,7 +159,7 @@ export const PUTActivity = async (id_actividad: number,token: string,updatedData
     );
 
     const actividad = await response.json();
-    console.log("update activity",actividad)
+    console.log("update activity", actividad)
     return actividad;
   } catch (error) {
     console.error("Error al actualizar el producto:", error);

@@ -1,22 +1,45 @@
-import React from 'react'
 import Stands from "@/components/stands/Stands"
+import { cookies } from 'next/headers';
+import { GETStandsAll } from "@/actions/feature/stands-action"
 
+type PageProps = {
+    searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
 
-export default function pageAsistente() {
-  return (
-        <div className="min-h-screen pt-0 sm:pt-0 lg:pt-0 px-2 sm:px-4 lg:px-6 space-y-6">
-        
+function takeFirst(v: string | string[] | undefined): string | undefined {
+    if (Array.isArray(v)) return v[0];
+    return v;
+}
 
-            {/* Encabezado */}
-            <div>
+function toPositiveInt(v?: string) {
+    const n = Number(v);
+    return Number.isFinite(n) && n > 0 ? n : undefined;
+}
 
-                <h1 className="text-xl sm:text-2xl font-bold text-purple-400 mb-2">Stands</h1>
-                <p className="text-gray-500 text-sm sm:text-base">
-                    ¡Ingresa un stand!
-                </p>
+export default async function pageAsistente({ searchParams }: PageProps) {
+    const params = await searchParams;
 
-            </div>
-            <Stands />
-        </div>
-  )
+    const page = Number(takeFirst(params.page)) || 1;
+    const page_size = Number(takeFirst(params.page_size)) || 20;
+    const search = takeFirst(params.search) || "";
+
+    const cookieStore = await cookies();
+    const eventFromUrl = toPositiveInt(takeFirst(params.event));
+    const eventFromCookie = toPositiveInt(cookieStore.get("event")?.value);
+    const eventId = eventFromUrl ?? eventFromCookie; // URL manda
+    const token = cookieStore.get("authToken")?.value ?? "";
+
+    const data = await GETStandsAll({ token, search: search.trim(), page: page, page_size: page_size, event: eventId, });
+
+    return (
+        <Stands 
+            initialData={data.results}
+            initialPage={page}
+            initialPageSize={page_size}
+            initialSearch={search}
+            totalPages={data.total_pages}
+            totalCount={data.count}
+            initialEvent={eventId}
+        />
+    )
 }

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { GETAsistenciall } from '@/actions/feature/asistencia-action'
+import { GETAsistenciAll } from '@/actions/feature/asistencia-action'
 import { GETActivity } from '@/actions/feature/activity-action'
 import { GETEvents } from '@/actions/feature/event-action'
 import { POSTCrontol } from '@/actions/feature/control-action'
@@ -42,7 +42,7 @@ export default function Registro() {
     evt?: string // id_event para asegurar si el asistente pertenece al evento 
   ): Promise<Asistencia | null> {
 
-    const pageSize = 100; // cuantos registros traes por pagina
+    const page_size = 100; // cuantos registros traes por pagina
     let page = 1; // empezamos en la pagina 1
 
     // normalizamos att a minúsculas por si es un correo
@@ -50,7 +50,7 @@ export default function Registro() {
 
     // llamamos el endpoint de asistentes paginado 
     while (true) {
-      const respuesta = await GETAsistenciall({ token, page, pageSize });
+      const respuesta = await GETAsistenciAll({ token, page, page_size });
 
       const items: Asistencia[] =
         respuesta?.results ??
@@ -69,10 +69,10 @@ export default function Registro() {
       // ¿Hay siguiente página?
       const siguiente_pagina = Boolean(respuesta?.next); // indica si hay mas paginas 
       const total_paginas = respuesta?.total_pages && respuesta?.page ? Number(respuesta.page) < Number(respuesta.total_pages) : false; // aqui devuelve page y total_pages
-      const contar_registro = typeof respuesta?.count === 'number' ? page * pageSize < Number(respuesta.count) : false; // mira el total de registros 
+      const contar_registro = typeof respuesta?.count === 'number' ? page * page_size < Number(respuesta.count) : false; // mira el total de registros 
 
       const Next =
-        siguiente_pagina || total_paginas || contar_registro || items.length === pageSize;
+        siguiente_pagina || total_paginas || contar_registro || items.length === page_size;
 
       if (!Next) break;
       page += 1;

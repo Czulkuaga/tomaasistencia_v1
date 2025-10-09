@@ -30,11 +30,12 @@ export const GETControlStand = async ({ token }: { token: string }) => {
   }
 };
 
-export const GETControStandlAll = async ({ token, search, page, page_size, }: { token: string; search?: string; page?: number; page_size?: number; }) => {
+export const GETControStandlAll = async ({ token, search, page, page_size,event }: { token: string; search?: string; page?: number; page_size?: number; event?:number }) => {
   const params = new URLSearchParams();
   if (search) params.append("search", search);
   if (page) params.append("page", page.toString());
   if (page_size) params.append("page_size", page_size.toString());
+  if (event) params.append("event", event.toString());
 
   try {
     const response = await fetch(

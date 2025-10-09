@@ -11,6 +11,11 @@ function takeFirst(v: string | string[] | undefined): string | undefined {
     return v;
 }
 
+function toPositiveInt(v?: string) {
+    const n = Number(v);
+    return Number.isFinite(n) && n > 0 ? n : undefined;
+}
+
 export default async function Page({ searchParams }: PageProps) {
     const params = await searchParams;
 
@@ -19,16 +24,20 @@ export default async function Page({ searchParams }: PageProps) {
     const search = takeFirst(params.search) || "";
 
     const cookieStore = await cookies();
+    const eventFromUrl = toPositiveInt(takeFirst(params.event));
+    const eventFromCookie = toPositiveInt(cookieStore.get("event")?.value);
+    const eventId = eventFromUrl ?? eventFromCookie; // URL manda
     const token = cookieStore.get("authToken")?.value ?? "";
 
-    const data = await GETAsistenciaSearch({ token, search: search.trim(), page: page, page_size: page_size });
+    const data = await GETAsistenciaSearch({ token, search: search.trim(), page: page, page_size: page_size, event: eventId });
 
-    return <ControlAsistente 
+    return <ControlAsistente
         initialData={data.results}
         initialPage={page}
         initialPageSize={page_size}
         initialSearch={search}
         totalPages={data.total_pages}
         totalCount={data.count}
+        initialEvent={eventId}
     />
 }

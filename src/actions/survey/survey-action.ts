@@ -31,40 +31,32 @@ export const GETEncuesta = async ({ token }: { token: string }) => {
   }
 };
 
-export const GETSurveys = async ({
-  token,
-  search = "",
-  page = 1,
-  pageSize = 10,
-}: {
-  token: string;
-  search?: string;
-  page?: number;
-  pageSize?: number;
-}) => {
+export const GETSurveys = async ({ token, search, page, page_size, event }: { token: string; search?: string; page?: number; page_size?: number; event?: number; }) => {
+
+  const params = new URLSearchParams();
+  if (search) params.append("search", search);
+  if (page) params.append("page", page.toString());
+  if (page_size) params.append("page_size", page_size.toString());
+  if (event) params.append("event", event.toString());
+
   try {
-    const url = new URL(`${BASE_URL}/api/surveys/`);
-    if (search) url.searchParams.set("search", search);
-    if (page) url.searchParams.set("page", String(page));
-    if (pageSize) url.searchParams.set("page_size", String(pageSize));
+    const res = await fetch(
+      `${BASE_URL}/api/surveys?${params.toString()}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        cache: "no-store",
+      });
 
-    const res = await fetch(url, {
-      method: "GET",
-      headers: {
-        "Content-type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      cache: "no-store",
-    });
-
-
-        // devuélvelo tal cual; el componente lo normaliza
-        return await res.json();
+    // devuélvelo tal cual; el componente lo normaliza
+    return await res.json();
 
   } catch (e) {
-    console.error("GETSurveys error:", e);
-
-        return { results: [], count: 0, page, page_size: pageSize, total_pages: 0 };
+    console.log("Error al hacer la peticion", e);
+    return [];
   }
 };
 
@@ -88,27 +80,27 @@ export const GETSurveyDetail = async (id_survey: number, token: string) => {
 };
 
 export async function POSTattendeeByEmail(email: string, activity_id: number) {
-    try {
-        const res = await fetch(`${BASE_URL}/api/surveys/attendeebyemail/`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            cache: "no-store",
-            body: JSON.stringify({
-                email: (email || "").trim().toLowerCase(),
-                activity_id,
-            }),
-        });
+  try {
+    const res = await fetch(`${BASE_URL}/api/surveys/attendeebyemail/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      cache: "no-store",
+      body: JSON.stringify({
+        email: (email || "").trim().toLowerCase(),
+        activity_id,
+      }),
+    });
 
-        if (!res.ok) {
-            const text = await res.text().catch(() => "");
-            throw new Error(`HTTP ${res.status}: ${text || res.statusText}`);
-        }
-
-        return await res.json(); // <- devuelve el JSON del backend
-    } catch (err) {
-        console.error("POSTattendeeByEmail error:", err);
-        return { ok: false, error: err instanceof Error ? err.message : "Unknown error" };
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      throw new Error(`HTTP ${res.status}: ${text || res.statusText}`);
     }
+
+    return await res.json(); // <- devuelve el JSON del backend
+  } catch (err) {
+    console.error("POSTattendeeByEmail error:", err);
+    return { ok: false, error: err instanceof Error ? err.message : "Unknown error" };
+  }
 }
 
 
@@ -186,12 +178,12 @@ export const DELETESurvey = async (id_survey: number, token: string) => {
     const raw = await res.text();
     const data = raw
       ? (() => {
-          try {
-            return JSON.parse(raw);
-          } catch {
-            return { message: raw };
-          }
-        })()
+        try {
+          return JSON.parse(raw);
+        } catch {
+          return { message: raw };
+        }
+      })()
       : null;
 
     if (!res.ok) {

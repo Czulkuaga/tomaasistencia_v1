@@ -1,7 +1,10 @@
 'use client'
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import React, { useCallback, useState, useTransition } from 'react'
+import React, { useCallback, useEffect, useState, useTransition } from 'react'
+import { EventSelector } from '../ui/EventSelector'
+import { getCookie } from 'cookies-next'
+import { GETEvents } from '@/actions/feature/event-action'
 
 interface ControlAsistenteProps {
   initialData?: Control[]
@@ -10,6 +13,7 @@ interface ControlAsistenteProps {
   initialSearch?: string
   totalPages?: number
   totalCount?: number
+  initialEvent?: number | undefined
 }
 
 type Control = {
@@ -21,13 +25,20 @@ type Control = {
   time: string
 }
 
-export default function ControlAsistente({ initialData, initialPage, initialPageSize, initialSearch, totalPages, totalCount }: ControlAsistenteProps) {
+interface EventItem {
+  id_event: number;
+  name: string;
+}
+
+export default function ControlAsistente({ initialData, initialPage, initialPageSize, initialSearch, totalPages, totalCount, initialEvent }: ControlAsistenteProps) {
 
   const router = useRouter();
   const pathname = usePathname();
   const urlSearchParams = useSearchParams();
   const [term, setTerm] = useState(initialSearch ?? "");
   const [isPending, startTransition] = useTransition();
+
+  const [idevent, setIdEvent] = useState<EventItem[]>([]);
 
   // Util para construir/actualizar la querystring
   const setQuery = useCallback(
@@ -50,14 +61,20 @@ export default function ControlAsistente({ initialData, initialPage, initialPage
       search: term.trim() || undefined,
       page: 1,
       page_size: initialPageSize,
+      event: initialEvent || undefined,  // 👈 aquí va
     });
-  }, [term, setQuery, initialPageSize]);
+  }, [term, initialEvent, setQuery, initialPageSize]);
 
-  // Limpiar
+  // Limpiar: quita search, conserva (o resetea) event
   const handleClear = useCallback(() => {
     setTerm("");
-    setQuery({ search: undefined, page: initialPage, page_size: initialPageSize });
-  }, [setQuery, initialPageSize, initialPage]);
+    setQuery({
+      search: undefined,
+      page: 1,
+      page_size: initialPageSize,
+      event: initialEvent || undefined,  // 👈 mantiene filtro de evento
+    });
+  }, [initialEvent, setQuery, initialPageSize]);
 
   // Paginación
   const handlePreviousPage = useCallback(() => {
@@ -66,9 +83,10 @@ export default function ControlAsistente({ initialData, initialPage, initialPage
         page: initialPage - 1,
         page_size: initialPageSize,
         search: term.trim() || undefined,
+        event: initialEvent || undefined, // 👈
       });
     }
-  }, [initialPage, initialPageSize, term, setQuery]);
+  }, [initialPage, initialPageSize, term, initialEvent, setQuery]);
 
   const handleNextPage = useCallback(() => {
     if (initialPage && totalPages && initialPage < totalPages) {
@@ -76,142 +94,170 @@ export default function ControlAsistente({ initialData, initialPage, initialPage
         page: initialPage + 1,
         page_size: initialPageSize,
         search: term.trim() || undefined,
+        event: initialEvent || undefined, // 👈
       });
     }
-  }, [initialPage, totalPages, initialPageSize, term, setQuery]);
+  }, [initialPage, totalPages, initialPageSize, term, initialEvent, setQuery]);
 
   const isFirst = initialPage ? initialPage <= 1 : true;
-  const isLast =  initialPage &&  totalPages ? initialPage >= totalPages: true;
+  const isLast = initialPage && totalPages ? initialPage >= totalPages : true;
+
+  // Obtener lista de eventos
+  const GetEventosList = async () => {
+    try {
+      const token = getCookie("authToken") as string ?? "";
+      if (!token) return;
+      const response = await GETEvents({ token });
+      setIdEvent(response.results);
+    } catch (error) {
+      console.error("Error fetching events:", error);
+    }
+  };
+
+  useEffect(() => {
+    GetEventosList();
+
+  }, [])
 
   return (
-    <section className="w-[90vw] md:w-[70vw] lg:w-[78vw] xl:w-[82vw] space-y-6 overflow-auto">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <section className="w-[90vw] md:w-[70vw] lg:w-[80vw] xl:w-[82vw] space-y-6 overflow-auto">
+      <div className="flex flex-col gap-3">
         <h1 className="text-xl sm:text-2xl font-bold text-purple-400 mb-2">Actividad registrados</h1>
 
         {/* 🔽 Exportar TODO */}
         {/* <ButtonDownloadActivity getRows={getAllRows} /> */}
-      </div>
 
-      <div className="flex items-center gap-2 mb-4">
-        <input
-          type="text"
-          placeholder="Buscar"
-          value={term}
-          onChange={(e) => setTerm(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-          className="w-64 border border-violet-200 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-900"
-        />
-        <button
-          onClick={handleSearch}
-          disabled={isPending}
-          className="px-3 py-2 rounded-md bg-violet-600 text-white text-sm hover:bg-violet-700 disabled:opacity-50"
-        >
-          {isPending ? "Buscando…" : "Buscar"}
-        </button>
+        <div className="w-full flex items-center gap-2 mb-4 justify-end">
+          <div className="flex items-center flex-col md:flex-row gap-2 mb-4">
+            <EventSelector
+              options={idevent.map(e => ({ id: e.id_event, name: e.name }))}
+              initialValue={initialEvent}
+            />
 
-        {!!term && (
-          <button
-            onClick={handleClear}
-            className="px-3 py-2 rounded-md bg-gray-100 text-gray-700 text-sm hover:bg-gray-200"
-          >
-            Limpiar
-          </button>
+            <div>
+              <input
+                type="text"
+                placeholder="Buscar"
+                value={term}
+                onChange={(e) => setTerm(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                className="w-64 border border-violet-200 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-900"
+              />
+              <button
+                onClick={handleSearch}
+                disabled={isPending}
+                className="px-3 py-2 rounded-md bg-violet-600 text-white text-sm hover:bg-violet-700 disabled:opacity-50"
+              >
+                {isPending ? "Buscando…" : "Buscar"}
+              </button>
+
+              {!!term && (
+                <button
+                  onClick={handleClear}
+                  className="px-3 py-2 rounded-md bg-gray-100 text-gray-700 text-sm hover:bg-gray-200"
+                >
+                  Limpiar
+                </button>
+              )}
+            </div>
+
+          </div>
+        </div>
+
+
+        {/* {loading && <div className="p-3 border rounded">Cargando…</div>} */}
+        {/* {!loading && error && <div className="p-3 border rounded text-red-600">{error}</div>} */}
+
+        {initialData && initialData.length > 0 && (
+          <>
+            <div className="w-full overflow-x-auto rounded-lg shadow">
+              <table className="w-full min-w-[1100px] border border-gray-200 rounded-lg text-xs sm:text-sm shadow-sm">
+                <thead className="bg-violet-100 text-violet-50 uppercase text-[10px] sm:text-xs font-semibold">
+                  <tr className="bg-violet-500">
+                    <th className="border p-1 text-center sm:p-2">Evento</th>
+                    <th className="border p-1 text-center sm:p-2">Actividad</th>
+                    <th className="border p-1 text-center sm:p-2">Nombre</th>
+                    <th className="border p-1 text-center sm:p-2">
+                      <button
+                        type="button"
+                        // onClick={toggleDateTimeSort}
+                        className="inline-flex items-center gap-1"
+                        title="Ordenar por fecha/hora"
+                      >
+                        {/* Fecha {sortIcon()} */}
+                        Fecha
+                      </button>
+                    </th>
+                    <th className="border p-1 text-center sm:p-2">
+                      <button
+                        type="button"
+                        // onClick={toggleDateTimeSort}
+                        className="inline-flex items-center gap-1"
+                        title="Ordenar por fecha/hora"
+                      >
+                        {/* Hora {sortIcon()} */}
+                        Hora
+                      </button>
+                    </th>
+
+                  </tr>
+                </thead>
+                <tbody>
+                  {
+                    initialData && initialData.length > 0 ? (
+                      initialData.map((row) => (
+                        <tr key={row.id_asistencia} className="odd:bg-purple-50">
+                          <td className="border border-gray-300 p-1 text-left max-w-[150px] truncate">{row.event_name}</td>
+                          <td className="border border-gray-300 p-1 text-left max-w-[150px] truncate">{row.activity_name || '—'}</td>
+                          <td className="border border-gray-300 p-1 text-left max-w-[150px] truncate">{row.attendee_name}</td>
+                          <td className="border border-gray-300 p-1 text-left max-w-[150px] truncate">{row.date}</td>
+                          <td className="border border-gray-300 p-1 text-left max-w-[150px] truncate">{row.time}</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={5} className="px-3 py-4 text-center text-red-500">
+                          No hay registros de control.
+                        </td>
+                      </tr>
+                    )
+                  }
+                </tbody>
+              </table>
+            </div>
+
+            {/* 🔽 Paginador */}
+            {/* Paginador (usar props del SSR) */}
+            {totalPages && totalPages > 1 && (
+              <div className="flex flex-col sm:flex-row justify-between items-center mt-6 gap-4">
+                <div className="text-sm text-gray-600">
+                  Página {initialPage} de {totalPages}
+                  {typeof totalCount === "number" ? <> · {totalCount} registros</> : null}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handlePreviousPage}
+                    disabled={isFirst && isPending}
+                    className={`flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${isFirst ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-violet-100 text-violet-600 hover:bg-violet-200"}`}
+                  >
+                    {isPending ? "Cargando…" : "Anterior"}
+                  </button>
+
+                  <button
+                    onClick={handleNextPage}
+                    disabled={isLast && isPending}
+                    className={`flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${isLast ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-violet-100 text-violet-600 hover:bg-violet-200"
+                      }`}
+                  >
+                    {isPending ? "Cargando…" : "Siguiente"}
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
-
-
-      {/* {loading && <div className="p-3 border rounded">Cargando…</div>} */}
-      {/* {!loading && error && <div className="p-3 border rounded text-red-600">{error}</div>} */}
-
-      {initialData && initialData.length > 0 && (
-        <>
-          <div className="w-full overflow-x-auto rounded-lg shadow">
-            <table className="w-full min-w-[1100px] border border-gray-200 rounded-lg text-xs sm:text-sm shadow-sm">
-              <thead className="bg-violet-100 text-violet-50 uppercase text-[10px] sm:text-xs font-semibold">
-                <tr className="bg-violet-500">
-                  <th className="border p-1 text-center sm:p-2">Evento</th>
-                  <th className="border p-1 text-center sm:p-2">Actividad</th>
-                  <th className="border p-1 text-center sm:p-2">Nombre</th>
-                  <th className="border p-1 text-center sm:p-2">
-                    <button
-                      type="button"
-                      // onClick={toggleDateTimeSort}
-                      className="inline-flex items-center gap-1"
-                      title="Ordenar por fecha/hora"
-                    >
-                      {/* Fecha {sortIcon()} */}
-                      Fecha
-                    </button>
-                  </th>
-                  <th className="border p-1 text-center sm:p-2">
-                    <button
-                      type="button"
-                      // onClick={toggleDateTimeSort}
-                      className="inline-flex items-center gap-1"
-                      title="Ordenar por fecha/hora"
-                    >
-                      {/* Hora {sortIcon()} */}
-                      Hora
-                    </button>
-                  </th>
-
-                </tr>
-              </thead>
-              <tbody>
-                {
-                  initialData && initialData.length > 0 ? (
-                    initialData.map((row) => (
-                      <tr key={row.id_asistencia} className="odd:bg-purple-50">
-                        <td className="border border-gray-300 p-1 text-left max-w-[150px] truncate">{row.event_name}</td>
-                        <td className="border border-gray-300 p-1 text-left max-w-[150px] truncate">{row.activity_name || '—'}</td>
-                        <td className="border border-gray-300 p-1 text-left max-w-[150px] truncate">{row.attendee_name}</td>
-                        <td className="border border-gray-300 p-1 text-left max-w-[150px] truncate">{row.date}</td>
-                        <td className="border border-gray-300 p-1 text-left max-w-[150px] truncate">{row.time}</td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={5} className="px-3 py-4 text-center text-red-500">
-                        No hay registros de control.
-                      </td>
-                    </tr>
-                  )
-                }
-              </tbody>
-            </table>
-          </div>
-
-          {/* 🔽 Paginador */}
-          {/* Paginador (usar props del SSR) */}
-          {totalPages && totalPages > 1 && (
-            <div className="flex flex-col sm:flex-row justify-between items-center mt-6 gap-4">
-              <div className="text-sm text-gray-600">
-                Página {initialPage} de {totalPages}
-                {typeof totalCount === "number" ? <> · {totalCount} registros</> : null}
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handlePreviousPage}
-                  disabled={isFirst && isPending}
-                  className={`flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${isFirst ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-violet-100 text-violet-600 hover:bg-violet-200"}`}
-                >
-                  {isPending ? "Cargando…" : "Anterior"}
-                </button>
-
-                <button
-                  onClick={handleNextPage}
-                  disabled={isLast && isPending}
-                  className={`flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${isLast ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-violet-100 text-violet-600 hover:bg-violet-200"
-                    }`}
-                >
-                  {isPending ? "Cargando…" : "Siguiente"}
-                </button>
-              </div>
-            </div>
-          )}
-        </>
-      )}
     </section>
   )
 }

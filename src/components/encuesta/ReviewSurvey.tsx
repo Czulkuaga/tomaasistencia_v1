@@ -79,7 +79,7 @@ export default function ReviewSurvey() {
 
             try {
                 if (selectedCategory === "actividades") {
-                    const data = await GETActivityAll({ token, pageSize: 1000});
+                    const data = await GETActivityAll({ token, page_size: 1000});
                     const list = Array.isArray(data?.results) ? data.results : Array.isArray(data) ? data : [];
                     const mapped: ItemRow[] = list.map((r: any) => ({
                         id: r.id_actividad ?? r.id,

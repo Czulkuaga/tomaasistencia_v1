@@ -59,18 +59,17 @@ export const GETDeliverables = async ({ token }: { token: string }) => {
 
 
 //paginacion de get
-export const GETDeliverablesAll = async ({
-  token,
-  page = 1,
-  pageSize = 20,
-}: {
-  token: string;
-  page?: number;
-  pageSize?: number;
-}) => {
+export const GETDeliverablesAll = async ({ token, search, page, page_size, event }: { token: string; search?: string; page?: number; page_size?: number; event?: number; }) => {
+
+  const params = new URLSearchParams();
+  if (search) params.append("search", search);
+  if (page) params.append("page", page.toString());
+  if (page_size) params.append("page_size", page_size.toString());
+  if (event) params.append("event", event.toString());
+
   try {
     const response = await fetch(
-      `${BASE_URL}/api/deliverables/?page=${page}&page_size=${pageSize}`,
+      `${BASE_URL}/api/deliverables?${params.toString()}`,
       {
         method: "GET",
         headers: {

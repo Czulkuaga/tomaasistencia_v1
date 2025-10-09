@@ -38,25 +38,17 @@ export const GETAsistencia = async ({ token }: { token: string }) => {
 
 //metodo de paginacion get
 
-export const GETAsistenciall = async ({
-  token,
-  page = 1,
-  pageSize = 20,
-  ordering,                    // ← NUEVO
-}: {
-  token: string;
-  page?: number;
-  pageSize?: number;
-  ordering?: string;           // "name" | "-name"
-}) => {
-  try {
-    const qs = new URLSearchParams();
-    qs.set("page", String(page));
-    qs.set("page_size", String(pageSize));  
-    if (ordering) qs.set("ordering", ordering);
+export const GETAsistenciAll = async ({ token, search, page, page_size, event }: { token: string; search?: string; page?: number; page_size?: number; event?: number; }) => {
 
+  const params = new URLSearchParams();
+  if (search) params.append("search", search);
+  if (page) params.append("page", page.toString());
+  if (page_size) params.append("page_size", page_size.toString());
+  if (event) params.append("event", event.toString());
+
+  try {
     const response = await fetch(
-      `${BASE_URL}/api/attendees/?${qs.toString()}`,
+      `${BASE_URL}/api/attendees?${params.toString()}`,
       {
         method: "GET",
         headers: {

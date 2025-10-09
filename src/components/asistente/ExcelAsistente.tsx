@@ -1,7 +1,7 @@
 "use client";
 import React, { useRef, useState, useEffect } from "react";
 import { getCookie } from "cookies-next";
-import { POSTCreateAsiste, GETAsistenciall } from "@/actions/feature/asistencia-action"; // 👈 necesario
+import { POSTCreateAsiste, GETAsistenciAll } from "@/actions/feature/asistencia-action"; // 👈 necesario
 import { GETEvents } from "@/actions/feature/event-action";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -165,9 +165,9 @@ export default function ExcelAsistente({
     const emails = new Set<string>();
     const docs = new Set<string>();
     let page = 1;
-    const pageSize = 200;
+    const page_size = 200;
     while (true) {
-      const res: any = await GETAsistenciall({ token, page, pageSize });
+      const res: any = await GETAsistenciAll({ token, page, page_size });
       const arr: any[] = res?.results ?? [];
       for (const a of arr) {
         if (Number(a.event) === Number(eventId)) {
