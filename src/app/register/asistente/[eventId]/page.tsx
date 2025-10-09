@@ -100,7 +100,7 @@ function mapBackendErrors(payload: any): FormErrors {
   return out;
 }
 
-export default function page() {
+export default function Page() {
 
   const route = useRouter();
   const { eventId } = useParams<{ eventId: string }>();
@@ -205,7 +205,7 @@ export default function page() {
     })();
 
     return () => { cancel = true; };
-  }, [eventId]);
+  }, [eventIdNum,eventId]);
 
   return (
     <div className="min-h-screen inset-0 bg-purple/50 backdrop-blur-sm flex items-center justify-center z-50">

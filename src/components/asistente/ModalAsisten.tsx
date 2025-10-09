@@ -88,7 +88,7 @@ export default function ModalAsisten({
       };
       fetchEvents();
     }
-  }, [isOpen]);
+  }, [isOpen, token]);
 
 
   const inputChangeHandler = (
