@@ -5,6 +5,21 @@ const BASE_URL = process.env.SERVER_URL
 import { revalidatePath } from "next/cache";
 import { EventResponse } from "@/types/events";
 
+interface Events {
+  name?: string;
+  description?: string;
+  country?: string;
+  state?: string;
+  city?: string;
+  address?: string;
+  start_date: string;
+  end_date: string;
+  start_time: string;
+  end_time: string;
+  is_active: boolean;
+  is_public_event?: boolean;
+}
+
 export async function GETEventsAll({
   token,
   page,
@@ -84,25 +99,6 @@ export async function DELETEvent(id_event: number, token: string) {
   return json;
 }
 
-
-// interface FormData {
-// //   id_bp?: string;
-//   id_event?: number
-//   name?: string;
-//   description?: string;
-//   country?: string;
-//   state?: string;
-//   city?: string;
-//   address?: string;
-//   start_date: string; 
-//   end_date: string;    
-//   start_time: string;  
-//   end_time: string;  
-//   is_active?: boolean  
-//   token?: string;
-// }
-
-
 export const GETEvents = async ({  token}: { token: string }) => {
     try {
         const response = await fetch(`${BASE_URL}/api/events/`,{
@@ -168,28 +164,28 @@ export const GETEventDetail = async (id_event: number, token: string) => {
 
 // //METODO POST
 
-// export const POSTCreateEvent = async(formData: FormData) =>{
-//     try {
-//         const response = await fetch(`${BASE_URL}/api/events/`,{
-//             method: "POST",
-//             headers:{
-//                 "Content-type":"application/json",
-//                 "Authorization": `Bearer ${formData.token}`,
-//             },
+export const POSTCreateEvent = async(token: string, formData: Events) =>{
+    try {
+        const response = await fetch(`${BASE_URL}/api/events/`,{
+            method: "POST",
+            headers:{
+                "Content-type":"application/json",
+                "Authorization": `Bearer ${token}`,
+            },
             
-//             body:JSON.stringify(formData)
-//         })
+            body:JSON.stringify(formData)
+        })
 
-//         // console.log("Respuesta cruda de la API:", response);
+        // console.log("Respuesta cruda de la API:", response);
 
-//         const event = await response.json()
-//         console.log("datos",event)
-//         return event
+        const event = await response.json()
+        console.log("datos",event)
+        return event
 
-//     } catch (error) {
-//         console.log(error)
-//     }
-// }
+    } catch (error) {
+        console.log(error)
+    }
+}
 
 
 // // METODO PUT

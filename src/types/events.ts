@@ -11,6 +11,7 @@ export interface Event {
   start_time: string;
   end_time: string;
   is_active: boolean;
+  is_public_event: boolean;
 }
 
 export interface EventResponse {

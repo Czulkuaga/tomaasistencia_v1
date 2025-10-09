@@ -25,6 +25,8 @@ export default function EventosClient({ token, initialData }: Props) {
 
   const { events, page, page_size, total_pages } = data;
 
+  // console.log("EventosClient render", { data });
+
   // UI optimista: eliminar
   const handleDelete = async (id_event: number) => {
     try {
@@ -69,6 +71,7 @@ export default function EventosClient({ token, initialData }: Props) {
               <th className="border p-1 text-center sm:p-2 w-18">HORA DE INICIO</th>
               <th className="border p-1 text-center sm:p-2 w-18">HORA FIN</th>
               <th className="border p-1 text-center sm:p-2 w-18">ACTIVO</th>
+              <th className="border p-1 text-center sm:p-2 w-18">PÚBLICO</th>
               <th className="border p-1 text-center sm:p-2 w-18">ACCIONES</th>
             </tr>
           </thead>
@@ -84,6 +87,7 @@ export default function EventosClient({ token, initialData }: Props) {
                   <td className="border border-gray-300 p-1 text-left max-w-[150px] truncate">{eve.start_time}</td>
                   <td className="border border-gray-300 p-1 text-left max-w-[150px] truncate">{eve.end_time}</td>
                   <td className="border border-gray-300 p-1 text-left max-w-[150px] truncate">{eve.is_active ? "Sí" : "No"}</td>
+                  <td className="border border-gray-300 p-1 text-left max-w-[150px] truncate">{eve.is_public_event ? "Sí" : "No"}</td>
                   <td className="border border-gray-300 p-1 text-left max-w-[150px] truncate">
                     <div className="flex justify-center items-center gap-2 sm:gap-4">
                       <button
@@ -177,13 +181,14 @@ export default function EventosClient({ token, initialData }: Props) {
         )
       }
 
-      {/* 
+      
       <ModalCreateE
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
+        token={token}
         // Si al crear quieres refrescar SSR, puedes:
         // onCreated={() => router.refresh()}
-      /> */}
+      />
     </section>
   );
 }

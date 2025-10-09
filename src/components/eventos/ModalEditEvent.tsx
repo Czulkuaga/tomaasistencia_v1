@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import type { Event } from "@/types/events";
 import { PATCHEvent } from "@/actions/feature/event-action";
+import { useRouter } from "next/navigation";
 
 type ModalEditEventProps = {
   isOpen: boolean;
@@ -23,6 +24,7 @@ type EventForm = {
   start_time: string;
   end_time: string;
   is_active: boolean;
+  is_public_event?: boolean;
 };
 
 export default function ModalEditEvent({
@@ -31,6 +33,7 @@ export default function ModalEditEvent({
   event,
   token
 }: ModalEditEventProps) {
+  const router = useRouter();
 
   const [eventState, setEventState] = useState<EventForm>({
     name: "",
@@ -44,6 +47,7 @@ export default function ModalEditEvent({
     start_time: "",
     end_time: "",
     is_active: false,
+    is_public_event: false
   });
 
   useEffect(() => {
@@ -60,6 +64,7 @@ export default function ModalEditEvent({
         start_time: event.start_time ?? "",
         end_time: event.end_time ?? "",
         is_active: !!event.is_active,
+        is_public_event: !!event.is_public_event
       });
     }
 
@@ -102,10 +107,14 @@ export default function ModalEditEvent({
 
     try {
       const res = await PATCHEvent(event?.id_event, token, payload);
-      if (!res.ok) {
+
+      if (res.ok) {
         throw new Error(`Error al actualizar el evento: ${res.status} ${res.error}`);
       }
+
+      router.refresh();
       console.log("Update Event Response", res);
+      onClose();
     } catch (error) {
       console.error("Error al actualizar el evento", error);
     }
@@ -268,10 +277,23 @@ export default function ModalEditEvent({
             <input
               type="checkbox"
               className="w-5 h-5 border rounded"
+              name="is_active"
               checked={eventState.is_active}
               onChange={handleChange}
             />
             <label className="text-sm font-medium text-gray-700">Activo</label>
+          </div>
+
+          {/* Público */}
+          <div className="flex items-center gap-2 col-span-2 mt-2">
+            <input
+              type="checkbox"
+              className="w-5 h-5 border rounded"
+              name="is_public_event"
+              checked={eventState.is_public_event}
+              onChange={handleChange}
+            />
+            <label className="text-sm font-medium text-gray-700">Público</label>
           </div>
         </div>
 

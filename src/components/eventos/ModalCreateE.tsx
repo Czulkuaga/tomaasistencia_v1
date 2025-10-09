@@ -1,16 +1,15 @@
 "use client";
 import { useState } from "react";
-import { getCookie } from "cookies-next";
-// import { POSTCreateEvent } from "@/actions/feature/event-action"
+import { useRouter } from "next/navigation";
+import { POSTCreateEvent } from "@/actions/feature/event-action";
 
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
-  refreshTypes: () => void;
+  token?: string;
 }
 
 interface Events {
-  // id_bp?: string;
   name?: string;
   description?: string;
   country?: string;
@@ -21,8 +20,9 @@ interface Events {
   end_date: string;
   start_time: string;
   end_time: string;
+  is_active: boolean;
+  is_public_event?: boolean;
 }
-
 
 const initialData = {
   // id_bp: "",
@@ -35,7 +35,9 @@ const initialData = {
   start_date: "",
   end_date: "",
   start_time: "",
-  end_time: ""
+  end_time: "",
+  is_active: true,
+  is_public_event: false,
 }
 
 interface FormErrors {
@@ -47,12 +49,12 @@ interface FormErrors {
 export default function ModalCreate({
   isOpen,
   onClose,
-  refreshTypes,
+  token
 }: ModalProps) {
+  const route = useRouter()
 
   const [formData, setFormData] = useState<Events>(initialData);
   const [errors, setErrors] = useState<FormErrors>({})
-
 
   const inputChangeHandler = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setErrors({})
@@ -67,23 +69,22 @@ export default function ModalCreate({
     })
   }
 
-
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: FormErrors = {}
     if (formData.name === "") newErrors.name = 'El nombre es obligatorio';
     if (Object.keys(newErrors).length === 0) {
       try {
-        const token = (getCookie("authToken") as string) || "";
-        // const res = await POSTCreateEvent({ ...formData, token });
+        if (!token) throw new Error("Token no proporcionado");
+        const res = await POSTCreateEvent(token,formData);
 
-        // if (res.error) {
-        //   return setErrors({ formError: res.error });
-        // }
+        if (res.error) {
+          return setErrors({ formError: res.error });
+        }
 
         setFormData(initialData);
         onClose();
-        refreshTypes();
+        route.refresh();
 
       } catch (error: unknown) {
         console.error("Error en la solicitud:", error);
@@ -98,9 +99,6 @@ export default function ModalCreate({
       setErrors(newErrors);
     }
   }
-
-
-
 
   return (
     <>
@@ -163,7 +161,7 @@ export default function ModalCreate({
                       id="country"
                       name="country"
                       value={formData.country}
-                       maxLength={30}
+                      maxLength={30}
                       onChange={inputChangeHandler}
                       className="px-3 py-2 border border-violet-100 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-400"
                     />
@@ -183,7 +181,7 @@ export default function ModalCreate({
                       onChange={inputChangeHandler}
                       className="px-3 py-2 border border-violet-100 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-400"
                     />
-                     <div className="text-right text-xs text-gray-500 mt-1">
+                    <div className="text-right text-xs text-gray-500 mt-1">
                       {(formData.state?.length ?? 0)}/30
                     </div>
                   </div>
@@ -199,7 +197,7 @@ export default function ModalCreate({
                       onChange={inputChangeHandler}
                       className="px-3 py-2 border border-violet-100 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-400"
                     />
-                     <div className="text-right text-xs text-gray-500 mt-1">
+                    <div className="text-right text-xs text-gray-500 mt-1">
                       {(formData.city?.length ?? 0)}/20
                     </div>
                   </div>
@@ -215,7 +213,7 @@ export default function ModalCreate({
                       onChange={inputChangeHandler}
                       className="px-3 py-2 border border-violet-100 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-400"
                     />
-                     <div className="text-right text-xs text-gray-500 mt-1">
+                    <div className="text-right text-xs text-gray-500 mt-1">
                       {(formData.address?.length ?? 0)}/45
                     </div>
                   </div>
@@ -266,6 +264,30 @@ export default function ModalCreate({
                       onChange={inputChangeHandler}
                       className="px-3 py-2 border border-violet-100 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-400"
                     />
+                  </div>
+
+                  {/* Activo */}
+                  <div className="flex items-center gap-2 col-span-2 mt-2">
+                    <input
+                      type="checkbox"
+                      name="is_active"
+                      className="w-5 h-5 border rounded"
+                      checked={formData.is_active}
+                      onChange={inputChangeHandler}
+                    />
+                    <label className="text-sm font-medium text-gray-700">Activo</label>
+                  </div>
+
+                  {/* Público */}
+                  <div className="flex items-center gap-2 col-span-2 mt-2">
+                    <input
+                      type="checkbox"
+                      name="is_public_event"
+                      className="w-5 h-5 border rounded"
+                      checked={formData.is_public_event}
+                      onChange={inputChangeHandler}
+                    />
+                    <label className="text-sm font-medium text-gray-700">Público</label>
                   </div>
                 </div>
 
