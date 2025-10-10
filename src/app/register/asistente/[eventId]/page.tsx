@@ -110,6 +110,7 @@ export default function Page() {
   const [errors, setErrors] = useState<FormErrors>({})
   const [events, setEvents] = useState<EventItem[]>([]);
   const [openSuccess, setOpenSuccess] = useState(false);
+  const [loading, setLoading] = useState<boolean>(false);
 
   const inputChangeHandler = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -185,30 +186,44 @@ export default function Page() {
   useEffect(() => {
     if (!eventId) return;            // sin eventId, no dispares
     let cancel = false;
+    setLoading(true);
 
     (async () => {
       try {
         // Llama tu API/endpoint (no server action desde client)
         const res = await getEventPublic(eventIdNum);
-        // console.log("Evento desde API:", res);
+
+        if (!res.ok) {
+          if (!cancel) setErrors({ formError: `No se pudo cargar el evento (No autorizado).` });
+          setLoading(false);
+          return;
+        }
+        if (!res.event) {
+          if (!cancel) setErrors({ formError: "No se encontró el evento." });
+          setLoading(false);
+          return;
+        }
+        const event = res.event;
         const newEvent = [
           {
             id_event: eventIdNum,
-            name: res.name
+            name: event.name
           }
         ]
+        setLoading(false);
         if (!cancel) setEvents(newEvent);
       } catch (err) {
         if (!cancel) console.error("Error cargando eventos:", err);
-        setErrors({ formError: "No se pudieron cargar los eventos. Refresca la página." });
+        setErrors({ formError: "Hubo un error con el evento" });
+        setLoading(false);
       }
     })();
 
     return () => { cancel = true; };
-  }, [eventIdNum,eventId]);
+  }, [eventIdNum, eventId]);
 
   return (
-    <div className="min-h-screen inset-0 bg-purple/50 backdrop-blur-sm flex items-center justify-center z-50">
+    <div className="min-h-screen inset-0 bg-purple/50 backdrop-blur-sm flex items-start justify-center z-50">
 
       <div className="w-full flex justify-center p-4 mt-10 mb-10">
 
@@ -222,186 +237,201 @@ export default function Page() {
             {/* Errores */}
             <div>
               {errors.formError && (
-                <p className="text-red-300">{errors.formError}</p>
+                <p className="text-red-400 text-center">{errors.formError}</p>
               )}
             </div>
 
-            {/* Inputs en Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
-              {/* SELECT DE EVENTOS */}
-              <div className="flex flex-col">
-                <label className="text-gray-400 font-semibold mb-1">EVENTO</label>
-                <select
-                  id="event"
-                  name="event"
-                  value={formData.event}
-                  onChange={inputChangeHandler}
-                  className="w-full border border-violet-100 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-900"
-                >
-                  <option value={0}>Seleccione un evento</option>
-                  {events.map((ev) => (
-                    <option key={ev.id_event} value={ev.id_event}>
-                      {ev.name}
-                    </option>
-                  ))}
-                </select>
-                {errors.event && (
-                  <span className="text-red-400 text-sm mt-1">
-                    {errors.event}
-                  </span>
-                )}
-              </div>
-
-              <div className="flex flex-col">
-                <label className="text-gray-400 font-semibold mb-1">
-                  TIPO DE IDENTIFICACION
-                </label>
-                <select
-                  id="identification_type"
-                  name="identification_type"
-                  value={formData.identification_type}
-                  onChange={inputChangeHandler}
-                  className="w-full border border-violet-100 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-900"
-                >
-                  <option value="">Seleccione...</option>
-                  {ID_TYPE_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.value}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-
-              <div className="flex flex-col">
-                <label className="text-gray-400 font-semibold mb-1">NÚMERO DE IDENTIFICACION</label>
-                <input
-                  type="tel"
-                  id="identification_number"
-                  name="identification_number"
-                  inputMode="numeric"
-                  value={formData.identification_number}
-                  onChange={(e) =>
-                    setFormData((p) => ({ ...p, identification_number: e.target.value.replace(/\D/g, '').slice(0, 20) }))
-                  }
-                  maxLength={20}
-                  className="w-full border border-violet-100 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-900"
-                />
-                <div className="text-right text-xs text-gray-500 mt-1">
-                  {(formData.identification_number?.length ?? 0)}/20
-                </div>
-              </div>
-
-              <div className="flex flex-col">
-                <label className="text-gray-400 font-semibold mb-1">NOMBRE</label>
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  autoComplete="off"
-                  maxLength={200}
-                  value={formData.name}
-                  onChange={inputChangeHandler}
-                  className="w-full border border-violet-100 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-900"
-                />
-                {
-                  errors.name && <span className="text-red-300">{errors.name}</span>
-                }
-                <div className="text-right text-xs text-gray-500 mt-1">
-                  {(formData.name?.length ?? 0)}/200
-                </div>
-              </div>
-
-
-              <div className="flex flex-col">
-                <label className="text-gray-400 font-semibold mb-1">CELULAR</label>
-                <input
-                  type="tel"
-                  id="phone"
-                  name="phone"
-                  value={formData.phone}
-                  inputMode="numeric"
-                  maxLength={20}
-                  onChange={(e) =>
-                    setFormData((p) => ({ ...p, phone: e.target.value.replace(/\D/g, '').slice(0, 20) }))
-                  }
-                  className="w-full border border-violet-100 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-900"
-                />
-                <div className="text-right text-xs text-gray-500 mt-1">
-                  {(formData.phone?.length ?? 0)}/20
-                </div>
-              </div>
-
-              <div className="flex flex-col">
-                <label className="text-gray-400 font-semibold mb-1">NOMBRE EMPRESA</label>
-                <input
-                  type="text"
-                  id="company_name"
-                  name="company_name"
-                  value={formData.company_name}
-                  onChange={inputChangeHandler}
-                  maxLength={60}
-                  className="w-full border border-violet-100 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-900"
-                />
-                {
-                  errors.company_name && <span className="text-red-300">{errors.company_name}</span>
-                }
-                <div className="text-right text-xs text-gray-500 mt-1">
-                  {(formData.company_name?.length ?? 0)}/60
-                </div>
-              </div>
-
-              <div className="flex flex-col">
-                <label className="text-gray-400 font-semibold mb-1">CORREO</label>
-                <input
-                  type="text"
-                  id="email"
-                  name="email"
-                  maxLength={60}
-                  value={formData.email}
-                  onChange={inputChangeHandler}
-                  className="w-full border border-violet-100 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-900"
-                />
-                {
-                  errors.email && <span className="text-red-300">{errors.email}</span>
-                }
-                <div className="text-right text-xs text-gray-500 mt-1">
-                  {(formData.email?.length ?? 0)}/60
-                </div>
-              </div>
-
-              {/* 👇 Select de Asistencia: VIRTUAL / PRESENCIAL */}
-              <div className="flex flex-col">
-                <label className="text-gray-400 font-semibold mb-1">
-                  ASISTENCIA
-                </label>
-                <select
-                  id="asistencia"
-                  name="asistencia"
-                  value={formData.asistencia}
-                  onChange={inputChangeHandler}
-                  className="w-full border border-violet-100 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-900"
-                >
-                  <option value="">Seleccione Asistencia</option>
-                  {ASISTENCIA_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.value}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
+            <div>
+              {loading && (
+                <p className="text-gray-500 text-center">Cargando evento...</p>
+              )}
+              {!loading && events.length === 0 && (
+                <p className="text-gray-500 text-center">No hay eventos disponibles.</p>
+              )}
             </div>
 
-            {/* Botones */}
-            <div className="mt-8 flex justify-center gap-4">
-              <button
-                type="submit"
-                className="px-4 py-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700"
-              >
-                Registrar Asistente
-              </button>
-            </div>
+            {
+              events.length > 0 && (
+                <>
+                  {/* Inputs en Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+                    {/* SELECT DE EVENTOS */}
+                    <div className="flex flex-col">
+                      <label className="text-gray-400 font-semibold mb-1">EVENTO</label>
+                      <select
+                        id="event"
+                        name="event"
+                        value={eventIdNum}
+                        onChange={inputChangeHandler}
+                        disabled={true}
+                        className="w-full border border-violet-100 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-900 bg-gray-200 cursor-not-allowed"
+                      >
+                        {events.map((ev) => (
+                          <option key={ev.id_event} value={ev.id_event}>
+                            {ev.name}
+                          </option>
+                        ))}
+                      </select>
+                      {errors.event && (
+                        <span className="text-red-400 text-sm mt-1">
+                          {errors.event}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex flex-col">
+                      <label className="text-gray-400 font-semibold mb-1">
+                        TIPO DE IDENTIFICACION
+                      </label>
+                      <select
+                        id="identification_type"
+                        name="identification_type"
+                        value={formData.identification_type}
+                        onChange={inputChangeHandler}
+                        className="w-full border border-violet-100 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-900"
+                      >
+                        <option value="">Seleccione...</option>
+                        {ID_TYPE_OPTIONS.map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.value}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+
+                    <div className="flex flex-col">
+                      <label className="text-gray-400 font-semibold mb-1">NÚMERO DE IDENTIFICACION</label>
+                      <input
+                        type="tel"
+                        id="identification_number"
+                        name="identification_number"
+                        inputMode="numeric"
+                        value={formData.identification_number}
+                        onChange={(e) =>
+                          setFormData((p) => ({ ...p, identification_number: e.target.value.replace(/\D/g, '').slice(0, 20) }))
+                        }
+                        maxLength={20}
+                        className="w-full border border-violet-100 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-900"
+                      />
+                      <div className="text-right text-xs text-gray-500 mt-1">
+                        {(formData.identification_number?.length ?? 0)}/20
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col">
+                      <label className="text-gray-400 font-semibold mb-1">NOMBRE</label>
+                      <input
+                        type="text"
+                        id="name"
+                        name="name"
+                        autoComplete="off"
+                        maxLength={200}
+                        value={formData.name}
+                        onChange={inputChangeHandler}
+                        className="w-full border border-violet-100 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-900"
+                      />
+                      {
+                        errors.name && <span className="text-red-300">{errors.name}</span>
+                      }
+                      <div className="text-right text-xs text-gray-500 mt-1">
+                        {(formData.name?.length ?? 0)}/200
+                      </div>
+                    </div>
+
+
+                    <div className="flex flex-col">
+                      <label className="text-gray-400 font-semibold mb-1">CELULAR</label>
+                      <input
+                        type="tel"
+                        id="phone"
+                        name="phone"
+                        value={formData.phone}
+                        inputMode="numeric"
+                        maxLength={20}
+                        onChange={(e) =>
+                          setFormData((p) => ({ ...p, phone: e.target.value.replace(/\D/g, '').slice(0, 20) }))
+                        }
+                        className="w-full border border-violet-100 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-900"
+                      />
+                      <div className="text-right text-xs text-gray-500 mt-1">
+                        {(formData.phone?.length ?? 0)}/20
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col">
+                      <label className="text-gray-400 font-semibold mb-1">NOMBRE EMPRESA</label>
+                      <input
+                        type="text"
+                        id="company_name"
+                        name="company_name"
+                        value={formData.company_name}
+                        onChange={inputChangeHandler}
+                        maxLength={60}
+                        className="w-full border border-violet-100 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-900"
+                      />
+                      {
+                        errors.company_name && <span className="text-red-300">{errors.company_name}</span>
+                      }
+                      <div className="text-right text-xs text-gray-500 mt-1">
+                        {(formData.company_name?.length ?? 0)}/60
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col">
+                      <label className="text-gray-400 font-semibold mb-1">CORREO</label>
+                      <input
+                        type="text"
+                        id="email"
+                        name="email"
+                        maxLength={60}
+                        value={formData.email}
+                        onChange={inputChangeHandler}
+                        className="w-full border border-violet-100 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-900"
+                      />
+                      {
+                        errors.email && <span className="text-red-300">{errors.email}</span>
+                      }
+                      <div className="text-right text-xs text-gray-500 mt-1">
+                        {(formData.email?.length ?? 0)}/60
+                      </div>
+                    </div>
+
+                    {/* 👇 Select de Asistencia: VIRTUAL / PRESENCIAL */}
+                    <div className="flex flex-col">
+                      <label className="text-gray-400 font-semibold mb-1">
+                        ASISTENCIA
+                      </label>
+                      <select
+                        id="asistencia"
+                        name="asistencia"
+                        value={formData.asistencia}
+                        onChange={inputChangeHandler}
+                        className="w-full border border-violet-100 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-900"
+                      >
+                        <option value="">Seleccione Asistencia</option>
+                        {ASISTENCIA_OPTIONS.map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.value}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                  </div>
+
+                  {/* Botones */}
+                  <div className="mt-8 flex justify-center gap-4">
+                    <button
+                      type="submit"
+                      className="px-4 py-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700"
+                    >
+                      Registrar Asistente
+                    </button>
+                  </div>
+                </>
+              )
+            }
 
           </div>
         </form>

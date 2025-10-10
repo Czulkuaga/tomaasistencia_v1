@@ -58,14 +58,12 @@ export async function getEventPublic(id_event: number) {
   });
 
   if (!res.ok) {
-    throw new Error(`getEventPublic failed: ${res.status} ${res.statusText}`);
+    return { ok: false, status: res.status, error: res.statusText };
   }
 
   const data = await res.json();
 
-  // console.log("getEventPublic data:", data);
-
-  return data
+  return { ok: true, status: res.status, event: data };
 }
 
 export async function PATCHEvent(
