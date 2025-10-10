@@ -4,17 +4,20 @@ import { useState } from "react";
 import type { Event, EventResponse } from "@/types/events";
 import Link from "next/link";
 import { DELETEvent } from "@/actions/feature/event-action";
-import { IoEye } from "react-icons/io5";
+import { IoEye, IoQrCode } from "react-icons/io5";
 import { FaUserEdit } from "react-icons/fa";
 import { MdDelete } from "react-icons/md";
 import ModalVista from "@/components/eventos/ModalVista";
 import ModalCreateE from "@/components/eventos/ModalCreateE";
 import ModalEditEvent from "./ModalEditEvent";
+import { QrCode } from "./QrCode";
 
 interface Props {
   token: string;
   initialData: EventResponse;
 }
+
+const REGISTER_URL = process.env.NEXT_PUBLIC_REGISTER_URL ?? "";
 
 export default function EventosClient({ token, initialData }: Props) {
   const [data, setData] = useState<EventResponse>(initialData);
@@ -22,10 +25,9 @@ export default function EventosClient({ token, initialData }: Props) {
   const [editModal, setEditModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [vista, setVista] = useState(false);
+  const [openQrModal, setQrModalOpen] = useState(false);
 
   const { events, page, page_size, total_pages } = data;
-
-  // console.log("EventosClient render", { data });
 
   // UI optimista: eliminar
   const handleDelete = async (id_event: number) => {
@@ -50,6 +52,11 @@ export default function EventosClient({ token, initialData }: Props) {
     for (let p = start; p <= end; p++) arr.push(p);
     return arr;
   };
+
+  const openModalToQr = (event: Event) => {
+    setSelectedEvent(event);
+    setQrModalOpen(true);
+  }
 
   return (
     <section className="space-y-6 overflow-auto w-full">
@@ -90,6 +97,10 @@ export default function EventosClient({ token, initialData }: Props) {
                   <td className="border border-gray-300 p-1 text-left max-w-[150px] truncate">{eve.is_public_event ? "Sí" : "No"}</td>
                   <td className="border border-gray-300 p-1 text-left max-w-[150px] truncate">
                     <div className="flex justify-center items-center gap-2 sm:gap-4">
+
+                      <button onClick={() => openModalToQr(eve)}>
+                        <IoQrCode size={20} className="text-purple-950 hover:text-violet-500 transition block" />
+                      </button>
                       <button
                         onClick={() => { setSelectedEvent(eve); setVista(true); }}
                         title="Ver información"
@@ -181,14 +192,22 @@ export default function EventosClient({ token, initialData }: Props) {
         )
       }
 
-      
+
       <ModalCreateE
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
         token={token}
-        // Si al crear quieres refrescar SSR, puedes:
-        // onCreated={() => router.refresh()}
       />
+      {
+        selectedEvent && openQrModal && (
+          <QrCode
+            selectedEvent={selectedEvent}
+            qrValue={selectedEvent ? `${REGISTER_URL}/register/asistente/${selectedEvent.id_event}` : ''}
+            setQrModalOpen={setQrModalOpen}
+          />
+        )
+      }
+
     </section>
   );
 }
