@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import type { Event } from "@/types/events";
-import { PATCHEvent } from "@/actions/feature/event-action";
-import { useRouter } from "next/navigation";
+import {useEffect, useState} from "react";
+import type {Event} from "@/types/events";
+import {PATCHEvent} from "@/actions/feature/event-action";
+import {useRouter} from "next/navigation";
 
 type ModalEditEventProps = {
   isOpen: boolean;
@@ -23,6 +23,8 @@ type EventForm = {
   end_date: string;
   start_time: string;
   end_time: string;
+  total_scoring_stands?: string,
+  total_scoring_activities?: string,
   is_active: boolean;
   is_public_event?: boolean;
 };
@@ -46,6 +48,8 @@ export default function ModalEditEvent({
     end_date: "",
     start_time: "",
     end_time: "",
+    total_scoring_stands: "",
+    total_scoring_activities: "",
     is_active: false,
     is_public_event: false
   });
@@ -63,6 +67,8 @@ export default function ModalEditEvent({
         end_date: event.end_date ?? "",
         start_time: event.start_time ?? "",
         end_time: event.end_time ?? "",
+        total_scoring_activities: event.total_scoring_activities ?? "",
+        total_scoring_stands: event.total_scoring_stands ?? "",
         is_active: !!event.is_active,
         is_public_event: !!event.is_public_event
       });
@@ -103,10 +109,8 @@ export default function ModalEditEvent({
     e.preventDefault();
     if (!event?.id_event) return;
 
-    const payload = eventState
-
     try {
-      const res = await PATCHEvent(event?.id_event, token, payload);
+      const res = await PATCHEvent(event?.id_event, token, eventState);
 
       if (res.ok) {
         throw new Error(`Error al actualizar el evento: ${res.status} ${res.error}`);
@@ -271,6 +275,31 @@ export default function ModalEditEvent({
               className="w-full border border-violet-100 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-900"
             />
           </div>
+
+            {/* Scoring */}
+            <div className="col-span-2 sm:col-span-1">
+                <label className="block text-sm font-medium text-gray-400 mb-1">
+                    Total Actividades
+                </label>
+                <input
+                    name="total_scoring_activities"
+                    value={eventState.total_scoring_activities}
+                    onChange={handleChange}
+                    className="w-full border border-violet-100 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-900"
+                />
+            </div>
+
+            <div className="col-span-2 sm:col-span-1">
+                <label className="block text-sm font-medium text-gray-400 mb-1">
+                    Total Stands
+                </label>
+                <input
+                    name="total_scoring_stands"
+                    value={eventState.total_scoring_stands}
+                    onChange={handleChange}
+                    className="w-full border border-violet-100 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-900"
+                />
+            </div>
 
           {/* Activo */}
           <div className="flex items-center gap-2 col-span-2 mt-2">

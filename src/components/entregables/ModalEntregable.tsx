@@ -227,12 +227,12 @@ export default function ModalEntregable({
                                             id="name"
                                             name="name"
                                             value={formData.name}
-                                            maxLength={100}
+                                            maxLength={60}
                                             onChange={inputChangeHandler}
                                             className="px-3 py-2 border border-purple-300 rounded-lg text-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-400"
                                         />
                                          <div className="text-right text-xs text-gray-500 mt-1">
-                                            {(formData.name?.length ?? 0)}/100
+                                            {(formData.name?.length ?? 0)}/60
                                         </div>
                                         <p className="text-violet-500 text-xs">{errors.nameError ?? errors.nameError}</p>
                                     </div>

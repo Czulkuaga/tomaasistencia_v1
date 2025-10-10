@@ -186,6 +186,9 @@ export default function Sidebar({ username, fromColor = "from-violet-600", }: { 
                 <Link href="/dashboard/asistente/import" className="py-1 px-2 rounded hover:bg-purple-400 text-sm">
                   Importar Excel
                 </Link>
+                  <Link href="/dashboard/qr/exportar" className="py-1 px-2 rounded hover:bg-purple-400 text-sm">
+                      Exportar QR
+                  </Link>
                 {/* <Link href="/dashboard/asistente/registro" className="py-1 px-2 rounded hover:bg-purple-400 text-sm">
                   Registro
                 </Link> */}
@@ -244,33 +247,6 @@ export default function Sidebar({ username, fromColor = "from-violet-600", }: { 
               </div>
             )}
           </div> */}
-
-          {/* QR */}
-          <div>
-            <button
-              onClick={() => setOpenQR(!openQR)}
-              className="flex items-center py-2 px-4 rounded hover:bg-purple-400 w-full text-left"
-            >
-              <MdQrCode2 size={22} className="mr-2" /> Lector QR
-              <FiChevronDown
-                className={`ml-auto transition-transform ${openQR ? "rotate-180" : ""
-                  }`}
-              />
-            </button>
-            {openQR && (
-              <div className="ml-8 flex flex-col gap-1">
-                <Link href="/dashboard/qr" className="py-1 px-2 rounded hover:bg-purple-400 text-sm">
-                  Escanear
-                </Link>
-                <Link href="/dashboard/qr/exportar" className="py-1 px-2 rounded hover:bg-purple-400 text-sm">
-                  Exportar
-                </Link>
-                {/* <Link href="/dashboard/qr/registro" className="py-1 px-2 rounded hover:bg-purple-400 text-sm">
-                  Registro
-                </Link> */}
-              </div>
-            )}
-          </div>
 
           {/* Reporte */}
 
@@ -471,6 +447,9 @@ export default function Sidebar({ username, fromColor = "from-violet-600", }: { 
                   <Link href="/dashboard/asistente" className="py-1 px-2 rounded hover:bg-purple-300 text-sm">
                     Ver asistentes
                   </Link>
+                    <Link href="/dashboard/qr/exportar" className="py-1 px-2 rounded hover:bg-purple-400 text-sm">
+                        Exportar
+                    </Link>
                   {/* <Link href="/dashboard/asistente/registro" className="py-1 px-2 rounded hover:bg-purple-300 text-sm">
                     Registro
                   </Link> */}
@@ -530,29 +509,6 @@ export default function Sidebar({ username, fromColor = "from-violet-600", }: { 
               )}
             </div>
                   */}
-
-            <div>
-              <button
-                onClick={() => setOpenQR(!openQR)}
-                className="flex items-center py-2 px-4 rounded hover:bg-purple-400 w-full text-left"
-              >
-                <MdQrCode2 size={22} className="mr-2" /> Lector QR
-                <FiChevronDown
-                  className={`ml-auto transition-transform ${openQR ? "rotate-180" : ""
-                    }`}
-                />
-              </button>
-              {openQR && (
-                <div className="ml-8 flex flex-col gap-1">
-                  <Link href="/dashboard/qr" className="py-1 px-2 rounded hover:bg-purple-300 text-sm">
-                    Escanear
-                  </Link>
-                  {/* <Link href="/dashboard/qr/registro" className="py-1 px-2 rounded hover:bg-purple-300 text-sm">
-                    Registro
-                  </Link> */}
-                </div>
-              )}
-            </div>
 
             {/* Reporte */}
 

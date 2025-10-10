@@ -10,6 +10,8 @@ export interface Event {
   end_date: string;
   start_time: string;
   end_time: string;
+  total_scoring_stands?: string,
+  total_scoring_activities?: string,
   is_active: boolean;
   is_public_event: boolean;
 }

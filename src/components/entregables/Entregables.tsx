@@ -455,12 +455,12 @@ export default function Entregables({ initialData, initialPage, initialPageSize,
                   name="name"
                   defaultValue={selectedeliverable.name}
                   onChange={(e) => setContadorName(e.target.value.length)}
-                  maxLength={100}
+                  maxLength={60}
                   className="w-full border border-violet-100 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-900"
                   required
                 />
                 <div className="text-right text-xs text-gray-500 mt-1">
-                  {contadorname}/100
+                  {contadorname}/60
                 </div>
               </div>
 

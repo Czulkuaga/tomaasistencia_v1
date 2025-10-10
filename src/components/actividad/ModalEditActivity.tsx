@@ -291,13 +291,13 @@ export const ModalEditActivity = ({ setEditModal, selectedActivity, setSelectedA
                         <input
                             name="name"
                             value={form.name}
-                            maxLength={100}
+                            maxLength={60}
                             onChange={handleChange}
                             className="w-full border border-purple-100 rounded-lg p-2 focus:ring-2 focus:ring-violet-400 text-gray-800"
                             required
                         />
                         <div className="text-right text-xs text-gray-500 mt-1">
-                            {contadorname}/100
+                            {contadorname}/60
                         </div>
                     </div>
 

@@ -20,6 +20,8 @@ interface Events {
   end_date: string;
   start_time: string;
   end_time: string;
+  total_scoring_stands?: string,
+  total_scoring_activities?: string,
   is_active: boolean;
   is_public_event?: boolean;
 }
@@ -36,6 +38,8 @@ const initialData = {
   end_date: "",
   start_time: "",
   end_time: "",
+  total_scoring_stands: "",
+  total_scoring_activities: "",
   is_active: true,
   is_public_event: false,
 }
@@ -127,13 +131,13 @@ export default function ModalCreate({
                       type="text"
                       id="name"
                       name="name"
-                      maxLength={100}
+                      maxLength={60}
                       value={formData.name}
                       onChange={inputChangeHandler}
                       className="px-3 py-2 border border-violet-100 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-400"
                     />
                     <div className="text-right text-xs text-gray-500 mt-1">
-                      {(formData.name?.length ?? 0)}/100
+                      {(formData.name?.length ?? 0)}/60
                     </div>
                   </div>
 
@@ -266,7 +270,39 @@ export default function ModalCreate({
                     />
                   </div>
 
-                  {/* Activo */}
+                    <div className="flex flex-col">
+                        <label className="text-gray-400 font-semibold mb-1">TOTAL ACTIVIDADES</label>
+                        <input
+                            type="number"
+                            id="total_scoring_activities"
+                            name="total_scoring_activities"
+                            maxLength={10}
+                            value={formData.total_scoring_activities}
+                            onChange={inputChangeHandler}
+                            className="px-3 py-2 border border-violet-100 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-400"
+                        />
+                        <div className="text-right text-xs text-gray-500 mt-1">
+                            {(formData.address?.length ?? 0)}/45
+                        </div>
+                    </div>
+
+                    <div className="flex flex-col">
+                        <label className="text-gray-400 font-semibold mb-1">TOTAL STANDS</label>
+                        <input
+                            type="number"
+                            id="total_scoring_stands"
+                            name="total_scoring_stands"
+                            maxLength={10}
+                            value={formData.total_scoring_stands}
+                            onChange={inputChangeHandler}
+                            className="px-3 py-2 border border-violet-100 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-400"
+                        />
+                        <div className="text-right text-xs text-gray-500 mt-1">
+                            {(formData.address?.length ?? 0)}/45
+                        </div>
+                    </div>
+
+                    {/* Activo */}
                   <div className="flex items-center gap-2 col-span-2 mt-2">
                     <input
                       type="checkbox"
