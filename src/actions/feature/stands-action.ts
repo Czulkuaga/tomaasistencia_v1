@@ -16,8 +16,6 @@ interface FormData {
   is_scoring: boolean;
 }
 
-
-
 export const GETStands = async ({ token }: { token: string }) => {
   try {
     const response = await fetch(`${BASE_URL}/api/stands/`, {
@@ -41,11 +39,11 @@ export const GETStands = async ({ token }: { token: string }) => {
 
 export const GETStandPublic = async (std: number) => {
   try {
-    const response = await fetch(`${BASE_URL}/api/stands/public-stand-info/?std=${encodeURIComponent(std)}`, {
+    const response = await fetch(`${BASE_URL}/api/stands/public-stand-info/?std=${std}`, {
       method: "GET",
       headers: {
         "Content-type": "application/json",
-      },
+      }
     });
     // console.log(response)
     const stands = await response.json();

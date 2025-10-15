@@ -109,7 +109,6 @@ export const GETAsistenciaSearch = async ({token,search,page,page_size, event}: 
   }
 };
 
-
 export const POSTCrontol = async ({
   token,
   attendee_id,
@@ -130,11 +129,25 @@ export const POSTCrontol = async ({
       attendee_email,
     }),
   });
-  console.log(
-    "datos enviados:",
-    JSON.stringify({ attendee_id, event_id, activity_id, attendee_email })
-  );
+
+  if (!response.ok) {
+    const errorResponse = {
+      ok: false,
+      status: response.status,
+      statusText: response.statusText,
+      result: await response.text()
+    }
+    // console.error("Error en POSTControl:", errorResponse);
+    return errorResponse;
+  }
+
   const control = await response.json();
-  console.log("datos", control);
-  return control;
+  const successResponse = { 
+    ok: true, 
+    status: response.status,
+    statusText: response.statusText,
+    result: control 
+  };
+  // console.log("Success en POSTControl:", successResponse);
+  return successResponse;
 };

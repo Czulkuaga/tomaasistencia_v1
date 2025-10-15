@@ -49,7 +49,7 @@ export const GETActivityPublic = async (atv: number) => {
     });
     // console.log(response)
     const actividad = await response.json();
-    console.log("datos", actividad)
+    // console.log("datos", actividad)
     return actividad;
   } catch (error) {
     console.log("Error al hacer la peticion", error);

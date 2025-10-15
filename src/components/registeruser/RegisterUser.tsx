@@ -210,6 +210,7 @@ export default function RegisterUser() {
 
     // Escanear QR
     async function startScanner() {
+        if (running || controlsRef.current) return;
         setErr(null); setMsg(null); setMsgKind(null);
         setSurveyPrompt(null);
         setScanMsg("Cámara activa. Apunta al QR…");
@@ -646,4 +647,3 @@ export default function RegisterUser() {
         </div>
     );
 }
-
