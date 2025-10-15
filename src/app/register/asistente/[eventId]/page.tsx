@@ -173,6 +173,7 @@ export default function Page() {
       // Éxito
       setErrors({});
       setFormData(initialData);
+      setFormData((p) => ({ ...p, event: eventIdNum }));
       route.refresh();
       setOpenSuccess(true);
 
@@ -203,6 +204,7 @@ export default function Page() {
           setLoading(false);
           return;
         }
+        setFormData((p) => ({ ...p, event: eventIdNum }));
         const event = res.event;
         const newEvent = [
           {
