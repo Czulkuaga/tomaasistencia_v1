@@ -1,4 +1,5 @@
 import RegisterUser from "@/components/registeruser/RegisterUser";
+import { Suspense } from "react";
 
 // import { GETActivityPublic } from "@/actions/feature/activity-action";
 // import { GETStandPublic } from "@/actions/feature/stands-action";
@@ -30,6 +31,8 @@ export default async function Page() {
   // console.log({ activity, stand, deliverable });
 
   return (
-    <RegisterUser />
+    <Suspense fallback={<div style={{ padding: 16 }}>Cargando…</div>}>
+      <RegisterUser />
+    </Suspense>
   );
 }
