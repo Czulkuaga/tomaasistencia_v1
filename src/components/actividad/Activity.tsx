@@ -5,7 +5,7 @@ import { DELETEActivity } from "@/actions/feature/activity-action"
 import { GETEvents } from "@/actions/feature/event-action"
 import { MdDelete } from "react-icons/md";
 import { FaUserEdit } from "react-icons/fa";
-// import ModalActivity from "@/components/actividad/ModalActivity"
+import ModalActivity from "@/components/actividad/ModalActivity"
 import { GETEncuesta } from "@/actions/survey/survey-action"
 import { IoQrCode } from "react-icons/io5";
 import QRCode from 'react-qr-code';
@@ -243,12 +243,10 @@ export default function Activity({ initialData, initialPage, initialPageSize, in
           </div>
         </div>
 
-
-        {/* <ModalActivity
+        <ModalActivity
           isOpen={isCreateProdu}
           onClose={() => setIsCreateProdu(false)}
-          refreshTypes={GetActivity} // ✅ Pasamos la función de refresco
-        /> */}
+        />
 
         <ModalVista isOpen={vista} onClose={() => setVista(false)} activity={selectedActivity} />
 

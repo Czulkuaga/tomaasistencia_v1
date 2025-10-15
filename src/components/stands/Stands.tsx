@@ -43,13 +43,6 @@ interface Survey {
     name: string;
 }
 
-interface PaginationInfo {
-    count: number;
-    page: number;
-    page_size: number;
-    total_pages: number;
-}
-
 const REGISTER_URL = process.env.NEXT_PUBLIC_REGISTER_URL ?? "";
 
 export default function Stands({ initialData, initialPage, initialPageSize, initialSearch, totalPages, totalCount, initialEvent }: ControlAsistenteProps) {
@@ -242,9 +235,10 @@ export default function Stands({ initialData, initialPage, initialPageSize, init
 
             // Llamamos al PUT
             const res = await PATCHStands(id_stand, token, jsonData);
-            if (res.message !== "Producto actualizado") {
+            if (res.message) {
                 console.log("No se pudo actualizar la actividad.");
             }
+            router.refresh(); // 🔄 recarga la página para ver los cambios
         } catch (error) {
             console.error("Error al actualizar la actividad", error);
         }
@@ -310,11 +304,10 @@ export default function Stands({ initialData, initialPage, initialPageSize, init
                 </div>
             </div>
 
-            {/* <ModalStand
+            <ModalStand
                 isOpen={isCreateProdu}
                 onClose={() => setIsCreateProdu(false)}
-                refreshTypes={GetAsistente} // 
-            /> */}
+            />
 
             <ModalVista isOpen={vista} onClose={() => setVista(false)} stand={selectedStands} />
 
@@ -428,9 +421,6 @@ export default function Stands({ initialData, initialPage, initialPageSize, init
 
             {editModal && selectedStands && (
                 <div className="fixed inset-0 bg-purple/50 backdrop-blur-sm flex items-center justify-center z-50">
-
-
-
                     <form
                         onSubmit={(e) => {
                             e.preventDefault();

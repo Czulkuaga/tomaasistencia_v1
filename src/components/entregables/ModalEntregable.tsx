@@ -3,11 +3,11 @@ import { getCookie } from "cookies-next";
 import { POSTCreateDeliverables } from "@/actions/feature/deliverables-action"
 import { GETEvents } from "@/actions/feature/event-action"
 import {GETEncuesta} from "@/actions/survey/survey-action"
+import { useRouter } from "next/navigation";
 
 interface ModalProps {
     isOpen: boolean;
     onClose: () => void;
-    refreshTypes: () => void;
 }
 
 interface Activity {
@@ -59,8 +59,9 @@ interface FormErrors {
 export default function ModalEntregable({
     isOpen,
     onClose,
-    refreshTypes,
 }: ModalProps) {
+
+    const router = useRouter();
 
     const [formData, setFormData] = useState<Activity>(initialData);
     const [errors, setErrors] = useState<FormErrors>({})
@@ -138,7 +139,7 @@ export default function ModalEntregable({
 
                 setFormData(initialData);
                 onClose();
-                if (refreshTypes) refreshTypes();
+                router.refresh();
 
             } catch (error: unknown) {
                 console.error("Error en la solicitud:", error);

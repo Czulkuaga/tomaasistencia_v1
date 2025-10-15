@@ -1,7 +1,7 @@
 "use client"
 import { useState, useEffect, useCallback, useTransition } from 'react'
 import { getCookie } from "cookies-next";
-import { GETDeliverablesAll, DELETEDeliverables, PUTDeliverables, GETEntregableaSearch } from "@/actions/feature/deliverables-action"
+import { DELETEDeliverables, PUTDeliverables, GETEntregableaSearch } from "@/actions/feature/deliverables-action"
 import { GETEvents } from "@/actions/feature/event-action"
 import { MdDelete } from "react-icons/md";
 import { FaUserEdit } from "react-icons/fa";
@@ -47,13 +47,6 @@ interface EventItem {
 interface Survey {
   id_survey: number;
   name: string;
-}
-
-interface PaginationInfo {
-  count: number;
-  page: number;
-  page_size: number;
-  total_pages: number;
 }
 
 const REGISTER_URL = process.env.NEXT_PUBLIC_REGISTER_URL ?? "";
@@ -210,9 +203,10 @@ export default function Entregables({ initialData, initialPage, initialPageSize,
 
       // Llamamos al PUT
       const res = await PUTDeliverables(id_deliverable, token, jsonData);
-      if (res.message !== "Producto actualizado") {
+      if (res.message) {
         console.log("No se pudo actualizar la actividad.");
       }
+      router.refresh();
     } catch (error) {
       console.error("Error al actualizar la actividad", error);
     }
@@ -279,11 +273,10 @@ export default function Entregables({ initialData, initialPage, initialPageSize,
 
       </div>
 
-      {/* <ModalEntregable
+      <ModalEntregable
         isOpen={isCreateProdu}
         onClose={() => setIsCreateProdu(false)}
-        refreshTypes={GETDeliverables} // ✅ Pasamos la función de refresco
-      /> */}
+      />
 
       <ModalVista isOpen={vista} onClose={() => setVista(false)} deliverable={selectedeliverable} />
 

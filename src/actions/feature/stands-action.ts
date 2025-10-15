@@ -154,7 +154,7 @@ export const PATCHStands = async (id_stand: number, token: string, updatedData: 
 
 
     const stands = await response.json();
-    console.log("update de stand", stands)
+    // console.log("update de stand", stands)
     return stands;
 
   } catch (error) {

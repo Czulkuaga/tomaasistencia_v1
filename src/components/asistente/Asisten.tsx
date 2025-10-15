@@ -61,7 +61,7 @@ export default function Asisten({ initialData, initialPage, initialPageSize, ini
   const [formErrors, setFormErrors] = useState<{ email?: string }>({});
 
   // para contar el numero de caracteres de la descripcion
-  const PHONE_MAX = 20;  // ajusta si quieres
+  const PHONE_MAX = 10;  // ajusta si quieres
   const ID_MAX = 20;
   const [contadorname, setContadorName] = useState<number>(selectedAsistente?.name?.length ?? 0);
   const [contadorPhone, setContadorPhone] = useState<number>(selectedAsistente?.phone?.toString().length ?? 0);
@@ -175,9 +175,10 @@ export default function Asisten({ initialData, initialPage, initialPageSize, ini
       );
       // Llamamos al PUT
       const res = await PUTAsistencia(id_asistente, token, jsonData);
-      if (res.message !== "Producto actualizado") {
+      if (res.message) {
         console.log("No se pudo actualizar la actividad.");
       }
+      router.refresh();
     } catch (error) {
       console.error("Error al actualizar la actividad", error);
     }

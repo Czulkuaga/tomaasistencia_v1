@@ -3,11 +3,11 @@ import { getCookie } from "cookies-next";
 import { POSTCreateActivity } from "@/actions/feature/activity-action"
 import { GETEvents } from "@/actions/feature/event-action"
 import { GETEncuesta } from "@/actions/survey/survey-action"
+import { useRouter } from "next/navigation";
 
 interface ModalProps {
     isOpen: boolean;
     onClose: () => void;
-    refreshTypes: () => void;
 }
 
 interface Activity {
@@ -63,8 +63,9 @@ interface FormErrors {
 export default function ModalActivity({
     isOpen,
     onClose,
-    refreshTypes,
 }: ModalProps) {
+
+    const route = useRouter()
 
     const [formData, setFormData] = useState<Activity>(initialData);
     const [errors, setErrors] = useState<FormErrors>({})
@@ -142,11 +143,11 @@ export default function ModalActivity({
                 const token = (getCookie("authToken") as string) || "";
                 const res = await POSTCreateActivity({ ...formData, token });
                 // console.log("Respuesta del servidor", res)
-
+                route.refresh()
 
                 setFormData(initialData);
                 onClose();
-                if (refreshTypes) refreshTypes();
+
 
             } catch (error: unknown) {
                 console.error("Error en la solicitud:", error);

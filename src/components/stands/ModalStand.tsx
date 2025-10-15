@@ -3,11 +3,11 @@ import { getCookie } from "cookies-next";
 import { POSTCreateStands } from "@/actions/feature/stands-action"
 import { GETEvents } from "@/actions/feature/event-action"
 import { GETEncuesta } from "@/actions/survey/survey-action"
+import { useRouter } from "next/navigation";
 
 interface ModalProps {
     isOpen: boolean;
     onClose: () => void;
-    refreshTypes: () => void;
 }
 
 interface Stands {
@@ -56,9 +56,9 @@ interface FormErrors {
 
 export default function ModalStand({
     isOpen,
-    onClose,
-    refreshTypes,
+    onClose
 }: ModalProps) {
+    const route = useRouter();
 
     const [formData, setFormData] = useState<Stands>(initialData);
     const [errors, setErrors] = useState<FormErrors>({})
@@ -141,7 +141,7 @@ export default function ModalStand({
 
                 setFormData(initialData);
                 onClose();
-                if (refreshTypes) refreshTypes();
+                route.refresh();
 
             } catch (error: unknown) {
                 console.error("Error en la solicitud:", error);

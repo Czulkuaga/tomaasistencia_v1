@@ -25,7 +25,7 @@ export default async function PageEvent({ searchParams }: PageProps) {
   const data: EventResponse = await GETEventsAll({ token, page, pageSize });
 
   return (
-    <div className="w-[90vw] md:w-[70vw] lg:w-[78vw] xl:w-[82vw] pt-0 px-2 sm:px-4 lg:px-6 space-y-6">
+    <div className="w-[90vw] md:w-[68vw] lg:w-[76vw] xl:w-[80vw] pt-0 px-2 sm:px-4 lg:px-6 space-y-6">
       <div>
         <h1 className="text-xl sm:text-2xl font-bold text-purple-400 mb-2">Evento</h1>
         <p className="text-gray-500 text-sm sm:text-base">

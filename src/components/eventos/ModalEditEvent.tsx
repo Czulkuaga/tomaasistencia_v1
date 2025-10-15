@@ -117,7 +117,6 @@ export default function ModalEditEvent({
       }
 
       router.refresh();
-      console.log("Update Event Response", res);
       onClose();
     } catch (error) {
       console.error("Error al actualizar el evento", error);
