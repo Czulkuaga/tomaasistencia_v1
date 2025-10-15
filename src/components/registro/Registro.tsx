@@ -203,35 +203,36 @@ export default function Registro() {
       if (!registro.act) { setSaveMsg('Falta la actividad. Vuelva al lector y seleccione evento + actividad.'); return }
 
 
-      const res = await POSTCrontol({
-        token,
-        attendee_id: Number(registro.att),
-        event_id: Number(registro.evt),
-        activity_id: Number(registro.act),
-        attendee_email: String()
-      })
+      // const res = await POSTCrontol({
+      //   token,
+      //   attendee_id: Number(registro.att),
+      //   event_id: Number(registro.evt),
+      //   activity_id: Number(registro.act),
+      //   attendee_email: String()
+      // })
 
 
-      const ok = res?.id_asistencia || res?.success || res?.message
-      if (ok) {
-        const dateFromApi = res?.date || res?.creation_date
-        const timeFromApi = res?.time || res?.creation_time
-        if (dateFromApi && timeFromApi) {
-          setSavedAt({ date: String(dateFromApi), time: String(timeFromApi) })
-        } else {
-        }
+      // const ok = res?.id_asistencia || res?.success || res?.message
+      const ok = true
+      if (ok) {}
+      //   const dateFromApi = res?.date || res?.creation_date
+      //   const timeFromApi = res?.time || res?.creation_time
+      //   if (dateFromApi && timeFromApi) {
+      //     setSavedAt({ date: String(dateFromApi), time: String(timeFromApi) })
+      //   } else {
+      //   }
 
-        // marcar como usado este QR para esta actividad
-        try {
+      //   // marcar como usado este QR para esta actividad
+      //   try {
 
-        } catch { }
+      //   } catch { }
 
-        setSaveMsg(res?.message || 'Asistencia registrada con éxito.')
-        setSaved(true)
-        setRegistro(null)
-      } else {
-        setSaveMsg('El Asistente ya quedo registrado.')
-      }
+      //   setSaveMsg(res?.message || 'Asistencia registrada con éxito.')
+      //   setSaved(true)
+      //   setRegistro(null)
+      // } else {
+      //   setSaveMsg('El Asistente ya quedo registrado.')
+      // }
     } catch (err) {
       console.error(err)
       setSaveMsg('Error al registrar el control.')

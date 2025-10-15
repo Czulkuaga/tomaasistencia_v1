@@ -151,3 +151,46 @@ export const POSTCrontol = async ({
   // console.log("Success en POSTControl:", successResponse);
   return successResponse;
 };
+
+// export const POSTCrontol = async ({
+//   token,
+//   attendee_id,
+//   event_id,
+//   activity_id,
+//   attendee_email,
+// }: FormData) => {
+//   const response = await fetch(`${BASE_URL}/api/controls/register/`, {
+//     method: "POST",
+//     headers: {
+//       "Content-Type": "application/json",
+//       Authorization: `Bearer ${token}`,
+//     },
+//     body: JSON.stringify({
+//       attendee_id,
+//       event_id,
+//       activity_id,
+//       attendee_email,
+//     }),
+//   });
+
+//   if (!response.ok) {
+//     const errorResponse = {
+//       ok: false,
+//       status: response.status,
+//       statusText: response.statusText,
+//       result: await response.text()
+//     }
+//     // console.error("Error en POSTControl:", errorResponse);
+//     return errorResponse;
+//   }
+
+//   const control = await response.json();
+//   const successResponse = { 
+//     ok: true, 
+//     status: response.status,
+//     statusText: response.statusText,
+//     result: control 
+//   };
+//   // console.log("Success en POSTControl:", successResponse);
+//   return successResponse;
+// };
