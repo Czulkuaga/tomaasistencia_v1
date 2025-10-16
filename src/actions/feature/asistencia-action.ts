@@ -215,7 +215,7 @@ export const SENDQrByEmail = async (formData: any, token: string) => {
     const responseError = {
       ok: response.ok,
       status: response.status,
-      error: response.statusText
+      message: response.statusText
     }
 
     return responseError
