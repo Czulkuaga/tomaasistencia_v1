@@ -10,6 +10,8 @@ import ModalAsisten from './ModalAsisten';
 import QRCode from 'react-qr-code';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { EventSelector } from '../ui/EventSelector';
+import { RiMailSendLine } from "react-icons/ri";
+import { ModalSendQrByEmail } from './ModalSendQrByEmail';
 
 interface AsistenteProps {
   initialData?: Asistencia[]
@@ -51,12 +53,13 @@ export default function Asisten({ initialData, initialPage, initialPageSize, ini
   const [term, setTerm] = useState(initialSearch ?? "");
   const [isPending, startTransition] = useTransition();
 
-  const [asistente, setAsistente] = useState<Asistencia[]>([]);
+  // const [asistente, setAsistente] = useState<Asistencia[]>([]);
   const [idevent, setIdEvent] = useState<{ id_event: number; name: string }[]>([]);
   const [editModal, setEditModal] = useState(false);
   const [isCreateProdu, setIsCreateProdu] = useState(false);
-  const [selectedAsistente, setSelectedAsistente] = useState<Asistencia | null>(null);
   const [qrModalOpen, setQrModalOpen] = useState(false);
+  const [openModalSendEmailQR, setOpenModalSendEmailQR] = useState(false)
+  const [selectedAsistente, setSelectedAsistente] = useState<Asistencia | null>(null);
   const [qrValue, setQrValue] = useState<string>('');
   const [formErrors, setFormErrors] = useState<{ email?: string }>({});
 
@@ -154,12 +157,6 @@ export default function Asisten({ initialData, initialPage, initialPageSize, ini
     try {
       const token = getCookie("authToken") as string || "";
       await DELETEAsistencia(id_asistente, token);
-      setAsistente(prev => prev.filter(a => a.id_asistente !== id_asistente));
-      // if (res.message === "Producto eliminado") {
-      //   setAsistente(prev => prev.filter(a => a.id_asistente !== id_asistente));
-      // } else {
-      //   console.log("No se pudo eliminar el producto.");
-      // }
     } catch (error) {
       console.error("Error al eliminar el bp", error);
     }
@@ -169,10 +166,6 @@ export default function Asisten({ initialData, initialPage, initialPageSize, ini
     try {
       const token = getCookie("authToken") as string || "";
       const jsonData = Object.fromEntries(updatedData.entries());
-      // Actualizamos localmente
-      setAsistente(prev =>
-        prev.map(a => a.id_asistente === id_asistente ? { ...a, ...jsonData } : a)
-      );
       // Llamamos al PUT
       const res = await PUTAsistencia(id_asistente, token, jsonData);
       if (res.message) {
@@ -188,6 +181,12 @@ export default function Asisten({ initialData, initialPage, initialPageSize, ini
     setQrValue(asistente.qr_code || '');
     setSelectedAsistente(asistente);
     setQrModalOpen(true);
+  }
+
+  function openSendQrByEmail(asistente: Asistencia) {
+    setQrValue(asistente.qr_code || '');
+    setSelectedAsistente(asistente);
+    setOpenModalSendEmailQR(true)
   }
 
   return (
@@ -279,6 +278,10 @@ export default function Asisten({ initialData, initialPage, initialPageSize, ini
                   <td className="border border-gray-300 p-1 text-left max-w-[150px] truncate">{asis.is_active ? "Sí" : "No"}</td>
                   <td className="border border-gray-300 p-1 text-center max-w-[150px] truncate">
                     <div className="flex justify-center items-center gap-2 sm:gap-4">
+
+                      <button onClick={() => openSendQrByEmail(asis)}>
+                        <RiMailSendLine size={20} className='text-violet-400 hover:text-violet-500 transition' />
+                      </button>
 
                       <button onClick={() => handleQR(asis)}>
                         <IoQrCode size={20} className="text-gray-950 hover:text-gray-500 transition block" />
@@ -611,6 +614,17 @@ export default function Asisten({ initialData, initialPage, initialPageSize, ini
         onClose={() => setIsCreateProdu(false)}
         token={token}
       />
+
+      {
+        openModalSendEmailQR && selectedAsistente && (
+          <ModalSendQrByEmail
+            isOpen={isCreateProdu}
+            onClose={() => setOpenModalSendEmailQR(false)}
+            token={token}
+            qrValue={qrValue}
+          />
+        )
+      }
     </section>
   )
 }
