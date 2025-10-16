@@ -1,63 +1,76 @@
+import { Event } from "@/types/events";
+import QRCode from "react-qr-code"
 
-export const HtmlQr = () => {
+interface Props {
+  qrValue?: string;
+  attendee?: Asistencia;
+  event: Event
+}
+
+type Asistencia = {
+    id_asistente?: number;
+    identification_type?: string;
+    identification_number?: string;
+    name?: string;
+    country?: string;
+    phone?: number;
+    company_name?: string;
+    email?: string;
+    qr_code: string;
+    token?: string;
+    event?: number;
+    start_time?: string;
+    is_active?: boolean;
+    asistencia?: string;
+}
+
+export const HtmlQr = ({ qrValue, attendee, event }: Props) => {
+  // console.log(attendee)
   return (
     <>
-      <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:linear-gradient(180deg,#0f172a 0%,#1e293b 100%); padding:30px 0;">
-        <tr>
-          <td align="center">
-            <!-- TARJETA -->
-            <table cellpadding="0" cellspacing="0" border="0" width="360" style="max-width:360px; background:#ffffff; border-radius:16px; overflow:hidden; box-shadow:0 6px 18px rgba(0,0,0,0.25);">
+      <div className="max-w-[360px] rounded-xl bg-gradient-to-b from-[#0f172a] to-[#1e293b] p-1">
+        <div className="max-w-[360px] bg-white border-2 overflow-hidden shadow-2xl">
+          {/* Image */}
+          <div className="h-[180px] bg-center bg-cover bg-no-repeat bg-[url('https://placehold.org/600x250/1e40af/FFFFFF?text=Auditoria-Test')]">
+          </div>
 
-              <!-- IMAGEN DEL EVENTO -->
-              <tr>
-                <td style="background:url('https://via.placeholder.com/600x250/1e40af/ffffff?text=VII+Congreso+de+Auditoría') no-repeat center/cover; height:180px;">
-                  <div style="height:180px; display:block;"></div>
-                </td>
-              </tr>
+          {/* Cuerpo */}
+          <div className="text-center py-[12px] px-[24px]">
+            <h2 className="text-lg font-semibold">Entrada Digital</h2>
+            <p className="m-[6px 0 20px 0] text-sm text-[#475569] pb-[16px]">Presenta este código QR en el acceso al evento</p>
+            <QRCode
+              value={qrValue || ' '}
+              size={240}
+              style={{ height: '200px', maxWidth: '200px', margin:"0 auto" }}
+            />
+            {/* <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=Estefania+Alcaraz+-+VII+Congreso+de+Auditoria" alt="QR test" className="w-[160px] h-[160px] mx-auto" /> */}
+          </div>
 
-              <!-- CUERPO -->
-              <tr>
-                <td style="padding:24px 24px 12px 24px; text-align:center; color:#0f172a;">
-                  <h2 style="margin:0; font-size:18px; font-weight:600;">Entrada Digital</h2>
-                  <p style="margin:6px 0 20px 0; font-size:14px; color:#475569;">Presenta este código QR en el acceso al evento</p>
+          {/* Datos */}
 
-                  <!-- QR -->
-                  <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=Estefania+Alcaraz+-+VII+Congreso+de+Auditoria" alt="Código QR" width="160" height="160" style="display:block; margin:auto; border:0;">
-                </td>
-              </tr>
+          <div className="bg-[#f9fafb] pt-[24px] border-t-2 border-[#e2e8f0] border-solid text-center pb-6">
+            <div>
+              <span>
+                <strong>Nombre:</strong>
+                <p>{attendee?.name ?? attendee?.name}</p>
+              </span>
 
-              <!-- DATOS -->
-              <tr>
-                <td style="padding:20px 24px 24px 24px; background:#f9fafb; border-top:1px solid #e2e8f0; text-align:center;">
-                  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="font-size:14px; color:#111827;">
-                    <tr>
-                      <td style="padding-bottom:8px;">
-                        <strong>Nombre:</strong><br>
-                          Estefania Alcaraz
-                      </td>
-                    </tr>
-                    <tr>
-                      <td style="padding-bottom:8px;">
-                        <strong>Evento:</strong><br>
-                          VII Congreso de Auditoría
-                      </td>
-                    </tr>
-                  </table>
-                </td>
-              </tr>
+              <span>
+                <strong>Evento:</strong>
+                <p>{event.name ?? event.name}</p>
+              </span>
+            </div>
+          </div>
 
-              <!-- PIE -->
-              <tr>
-                <td align="center" style="background:#0f172a; padding:16px;">
-                  <p style="margin:0; font-size:12px; color:#94a3b8;">
-                    © 2025 Aliatic S.A.S. Todos los derechos reservados.
-                  </p>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-      </table>
+          {/* Pie */}
+          <div className="bg-[#0f172a] p-[16px]">
+            <p style={{ margin: 0, fontSize: "12px", color: "#94a3b8" }} className="text-center">
+              © 2025 Aliatic S.A.S. Todos los derechos reservados.
+            </p>
+          </div>
+
+        </div>
+      </div>
     </>
   )
 }

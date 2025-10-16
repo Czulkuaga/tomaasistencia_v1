@@ -36,7 +36,6 @@ interface Asistencia {
   email?: string;
   qr_code: string;
   token?: string;
-  id_event?: number
   event?: number
   start_time?: string;
   is_active?: boolean;
@@ -622,6 +621,7 @@ export default function Asisten({ initialData, initialPage, initialPageSize, ini
             onClose={() => setOpenModalSendEmailQR(false)}
             token={token}
             qrValue={qrValue}
+            attendee={selectedAsistente}
           />
         )
       }

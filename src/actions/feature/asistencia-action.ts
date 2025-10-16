@@ -65,7 +65,6 @@ export const GETAsistenciAll = async ({ token, search, page, page_size, event }:
   }
 };
 
-
 export const GETAsistenciaSearch = async ({
   token,
   search = "",
@@ -199,3 +198,36 @@ export const DELETEAsistencia = async (id_asistente: number, token: string) => {
     return { error: "No se pudo eliminar el producto" };
   }
 };
+
+// METODO ENVIAR MAIL AL ASISTENTE
+
+export const SENDQrByEmail = async (formData: any, token: string) => {
+  const response = await fetch(`${BASE_URL}/api/attendees/send-template-mail/`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(formData)
+  });
+
+  if (!response.ok) {
+    const responseError = {
+      ok: response.ok,
+      status: response.status,
+      error: response.statusText
+    }
+
+    return responseError
+  }
+
+  const data = await response.json()
+  const responseSuccess = {
+    ok: response.ok,
+    status: response.status,
+    message: response.statusText,
+    info: data
+  }
+
+  return responseSuccess
+}
