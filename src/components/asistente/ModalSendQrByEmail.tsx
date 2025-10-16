@@ -36,14 +36,16 @@ type Asistencia = {
   asistencia?: string;
 }
 
-export const ModalSendQrByEmail = ({ onClose, token, qrValue, attendee }: Props) => {
+const minifyHtml = (s: string) =>
+  s.replace(/>\s+</g, '><')      // quita espacios entre tags
+    .replace(/\s{2,}/g, ' ')      // colapsa espacios múltiples
+    .trim();
 
-  const [errors, setErrors] = useState<FormErrors>({})
-  const [eventData, setEventData] = useState<Event | null>(null)
-  const [load, setLoad] = useState(false)
-
-  const htmlToSend = `
-        <!doctype html>
+function makeTicketHtml({ nombre, evento, qrUrl, bannerUrl }: {
+  nombre: string; evento: string; qrUrl: string; bannerUrl: string;
+}) {
+  return `
+  <!doctype html>
 <html lang="es">
 <head>
   <meta charset="utf-8">
@@ -61,7 +63,7 @@ export const ModalSendQrByEmail = ({ onClose, token, qrValue, attendee }: Props)
           
           <!-- IMAGEN DEL EVENTO -->
           <tr>
-            <td style="background:url('https://via.placeholder.com/600x250/1e40af/ffffff?text=VII+Congreso+de+Auditoría') no-repeat center/cover; height:180px;">
+            <td style="background:url('${bannerUrl}') no-repeat center/cover; height:180px;">
               <div style="height:180px; display:block;"></div>
             </td>
           </tr>
@@ -73,7 +75,7 @@ export const ModalSendQrByEmail = ({ onClose, token, qrValue, attendee }: Props)
               <p style="margin:6px 0 20px 0; font-size:14px; color:#475569;">Presenta este código QR en el acceso al evento</p>
               
               <!-- QR -->
-              <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=Estefania+Alcaraz+-+VII+Congreso+de+Auditoria" alt="Código QR" width="160" height="160" style="display:block; margin:auto; border:0;">
+              <img src="${qrUrl}" alt="Código QR" width="160" height="160" style="display:block; margin:auto; border:0;">
             </td>
           </tr>
 
@@ -84,13 +86,13 @@ export const ModalSendQrByEmail = ({ onClose, token, qrValue, attendee }: Props)
                 <tr>
                   <td style="padding-bottom:8px;">
                     <strong>Nombre:</strong><br>
-                    Estefania Alcaraz
+                    ${nombre}
                   </td>
                 </tr>
                 <tr>
                   <td style="padding-bottom:8px;">
                     <strong>Evento:</strong><br>
-                    VII Congreso de Auditoría
+                    ${evento}
                   </td>
                 </tr>
               </table>
@@ -111,19 +113,35 @@ export const ModalSendQrByEmail = ({ onClose, token, qrValue, attendee }: Props)
   </table>
 </body>
 </html>
-    `
+  `;
+}
+
+export const ModalSendQrByEmail = ({ onClose, token, qrValue, attendee }: Props) => {
+
+  const [errors, setErrors] = useState<FormErrors>({})
+  const [eventData, setEventData] = useState<Event | null>(null)
+  const [load, setLoad] = useState(false)
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoad(true)
     setErrors({})
 
+    const html = makeTicketHtml({
+      nombre: attendee?.name || "",
+      evento: eventData?.name ?? '',
+      qrUrl: "https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=Estefania+Alcaraz+-+VII+Congreso+de+Auditoria",
+      bannerUrl: 'https://placehold.org/600x250/1e40af/FFFFFF?text=Auditoria-Test'
+    });
+
+    const htmlMin = minifyHtml(html);
+
     const formData = {
       attendee_id: attendee?.id_asistente,
       subject: `Evento: ${eventData?.name}`,
       attach_qr_png: true,
       extra_to: null,
-      html: htmlToSend
+      html: htmlMin
     }
 
     try {
