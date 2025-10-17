@@ -210,22 +210,25 @@ export const SENDQrByEmail = async (formData: any, token: string) => {
     },
     body: JSON.stringify(formData)
   });
+  // console.log("Res pura del api", response)
+
+  const data = await response.json()
+  console.log(data)
 
   if (!response.ok) {
     const responseError = {
       ok: response.ok,
       status: response.status,
-      message: response.statusText
+      message: data.message
     }
 
     return responseError
   }
 
-  const data = await response.json()
   const responseSuccess = {
     ok: response.ok,
     status: response.status,
-    message: response.statusText,
+    message: data.message,
     info: data
   }
 
