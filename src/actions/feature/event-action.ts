@@ -23,9 +23,9 @@ interface Events {
 export async function GETEventsAll({
   token,
   page,
-  pageSize,
-}: { token: string; page?: number; pageSize?: number }): Promise<EventResponse> {
-  const res = await fetch(`${BASE_URL}/api/events?page=${page}&pageSize=${pageSize}`, {
+  page_size,
+}: { token: string; page?: number; page_size?: number }): Promise<EventResponse> {
+  const res = await fetch(`${BASE_URL}/api/events?page=${page}&pageSize=${page_size}`, {
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
@@ -44,7 +44,7 @@ export async function GETEventsAll({
     events: Array.isArray(data?.results) ? data.results : [],
     count: Number(data?.count ?? 0),
     page: Number(data?.page ?? page),
-    page_size: Number(data?.page_size ?? pageSize),
+    page_size: Number(data?.page_size ?? page_size),
     total_pages: Number(data?.total_pages ?? 0),
   };
 }

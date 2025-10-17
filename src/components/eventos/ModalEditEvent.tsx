@@ -1,9 +1,9 @@
 "use client";
 
-import {useEffect, useState} from "react";
-import type {Event} from "@/types/events";
-import {PATCHEvent} from "@/actions/feature/event-action";
-import {useRouter} from "next/navigation";
+import { useEffect, useState } from "react";
+import type { Event } from "@/types/events";
+import { PATCHEvent } from "@/actions/feature/event-action";
+import { useRouter } from "next/navigation";
 
 type ModalEditEventProps = {
   isOpen: boolean;
@@ -116,8 +116,8 @@ export default function ModalEditEvent({
         throw new Error(`Error al actualizar el evento: ${res.status} ${res.error}`);
       }
 
-      router.refresh();
       onClose();
+      router.refresh();
     } catch (error) {
       console.error("Error al actualizar el evento", error);
     }
@@ -275,30 +275,30 @@ export default function ModalEditEvent({
             />
           </div>
 
-            {/* Scoring */}
-            <div className="col-span-2 sm:col-span-1">
-                <label className="block text-sm font-medium text-gray-400 mb-1">
-                    Total Actividades
-                </label>
-                <input
-                    name="total_scoring_activities"
-                    value={eventState.total_scoring_activities}
-                    onChange={handleChange}
-                    className="w-full border border-violet-100 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-900"
-                />
-            </div>
+          {/* Scoring */}
+          <div className="col-span-2 sm:col-span-1">
+            <label className="block text-sm font-medium text-gray-400 mb-1">
+              Total Actividades
+            </label>
+            <input
+              name="total_scoring_activities"
+              value={eventState.total_scoring_activities}
+              onChange={handleChange}
+              className="w-full border border-violet-100 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-900"
+            />
+          </div>
 
-            <div className="col-span-2 sm:col-span-1">
-                <label className="block text-sm font-medium text-gray-400 mb-1">
-                    Total Stands
-                </label>
-                <input
-                    name="total_scoring_stands"
-                    value={eventState.total_scoring_stands}
-                    onChange={handleChange}
-                    className="w-full border border-violet-100 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-900"
-                />
-            </div>
+          <div className="col-span-2 sm:col-span-1">
+            <label className="block text-sm font-medium text-gray-400 mb-1">
+              Total Stands
+            </label>
+            <input
+              name="total_scoring_stands"
+              value={eventState.total_scoring_stands}
+              onChange={handleChange}
+              className="w-full border border-violet-100 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-900"
+            />
+          </div>
 
           {/* Activo */}
           <div className="flex items-center gap-2 col-span-2 mt-2">

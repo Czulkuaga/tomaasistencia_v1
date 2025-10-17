@@ -36,10 +36,10 @@ type Asistencia = {
   asistencia?: string;
 }
 
-const minifyHtml = (s: string) =>
-  s.replace(/>\s+</g, '><')      // quita espacios entre tags
-    .replace(/\s{2,}/g, ' ')      // colapsa espacios múltiples
-    .trim();
+// const minifyHtml = (s: string) =>
+//   s.replace(/>\s+</g, '><')      // quita espacios entre tags
+//     .replace(/\s{2,}/g, ' ')      // colapsa espacios múltiples
+//     .trim();
 
 function makeTicketHtml({ nombre, evento, qrUrl, bannerUrl }: {
   nombre: string; evento: string; qrUrl: string; bannerUrl: string;

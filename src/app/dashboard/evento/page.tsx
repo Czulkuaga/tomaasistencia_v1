@@ -17,12 +17,12 @@ export default async function PageEvent({ searchParams }: PageProps) {
   const params = await searchParams;
 
   const page = Number(takeFirst(params.page)) || 1;
-  const pageSize = Number(takeFirst(params.pageSize)) || 20;
+  const page_size = Number(takeFirst(params.pageSize)) || 20;
 
   const cookieStore = await cookies();
   const token = cookieStore.get("authToken")?.value ?? "";
 
-  const data: EventResponse = await GETEventsAll({ token, page, pageSize });
+  const data: EventResponse = await GETEventsAll({ token, page, page_size });
 
   return (
     <div className="w-[90vw] md:w-[68vw] lg:w-[76vw] xl:w-[80vw] pt-0 px-2 sm:px-4 lg:px-6 space-y-6">
@@ -34,7 +34,14 @@ export default async function PageEvent({ searchParams }: PageProps) {
       </div>
 
       {/* Client-only interacciones (modales, editar/eliminar, UI optimista) */}
-      <Eventos token={token} initialData={data} />
+      <Eventos
+        initialData={data.events}
+        initialPage={page}
+        initialPageSize={page_size}
+        totalPages={data.total_pages}
+        totalCount={data.count}
+        token={token}
+      />
     </div>
   );
 }
