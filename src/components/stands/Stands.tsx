@@ -1,7 +1,7 @@
 "use client"
 import { useState, useEffect, useCallback, useTransition } from 'react'
 import { getCookie } from "cookies-next";
-import { GETStandsAll, DELETEStands, PATCHStands, GETAsistenciaSearch } from "@/actions/feature/stands-action"
+import { DELETEStands, PATCHStands } from "@/actions/feature/stands-action"
 import { GETEvents } from "@/actions/feature/event-action"
 import { MdDelete } from "react-icons/md";
 import { IoQrCode } from "react-icons/io5";
@@ -53,7 +53,7 @@ export default function Stands({ initialData, initialPage, initialPageSize, init
     const [term, setTerm] = useState(initialSearch ?? "");
     const [isPending, startTransition] = useTransition();
 
-    const [stand, setStand] = useState<Stands[]>([]);
+    // const [stand, setStand] = useState<Stands[]>([]);
     const [idevent, setIdEvent] = useState<{ id_event: number; name: string }[]>([]);
     const [idencuesta, setIdEncuesta] = useState<Survey[]>([]);
     const [editModal, setEditModal] = useState(false);
@@ -131,51 +131,6 @@ export default function Stands({ initialData, initialPage, initialPageSize, init
     const isFirst = initialPage ? initialPage <= 1 : true;
     const isLast = initialPage && totalPages ? initialPage >= totalPages : true;
 
-
-
-    // const GetAsistente = useCallback(async () => {
-    //     try {
-    //         const token = getCookie("authToken") as string ?? "";
-
-    //         if (!token) {
-    //             console.error("No hay un token válido");
-    //             return;
-    //         }
-
-    //         let response: any;
-
-    //         if (appliedSearch.trim().length > 0) {
-    //             response = await GETAsistenciaSearch({ token, search: appliedSearch.trim() });
-
-    //             const results = Array.isArray(response) ? response : (response.results ?? []);
-    //             setStand(results);
-
-    //             setPaginationInfo({
-    //                 count: Array.isArray(response) ? response.length : (response.count ?? results.length),
-    //                 page: 1,
-    //                 page_size: results.length,
-    //                 total_pages: 1,
-    //             });
-
-    //         } else {
-    //             const response = await GETStandsAll({ token, page: currentPage, pageSize, });
-    //             setStand(response.results);
-    //             console.log("arriba", response)
-    //             setPaginationInfo({
-    //                 count: response.count,
-    //                 page: response.page,
-    //                 page_size: response.page_size,
-    //                 total_pages: response.total_pages
-    //             })
-
-    //         }
-
-
-    //     } catch (error) {
-    //         console.error("Error fetching products:", error);
-    //     }
-    // }, [initialPage, totalPages, appliedSearch])
-
     const GetEventosList = async () => {
         try {
             const token = getCookie("authToken") as string ?? "";
@@ -199,7 +154,6 @@ export default function Stands({ initialData, initialPage, initialPageSize, init
         }
     };
 
-
     useEffect(() => {
         // GetAsistente();
         GetEventosList();
@@ -210,16 +164,10 @@ export default function Stands({ initialData, initialPage, initialPageSize, init
         setContador(selectedStands?.description?.length ?? 0);
     }, [selectedStands]);
 
-
     // metodo de eliminar
     const handledelete = async (id_stand: number) => {
         const token = (getCookie("authToken") as string) || "";
         const ok = await DELETEStands(id_stand, token);
-        if (ok) {
-            setStand(prev => prev.filter(p => p.id_stand !== id_stand)); // ✅ quita el item del estado
-        } else {
-            console.error("No se pudo eliminar el stand");
-        }
     };
 
     // metodo de actulizar
@@ -227,11 +175,6 @@ export default function Stands({ initialData, initialPage, initialPageSize, init
         try {
             const token = getCookie("authToken") as string || "";
             const jsonData = Object.fromEntries(updatedData.entries());
-
-            // Actualizamos localmente
-            setStand(prev =>
-                prev.map(a => a.id_stand === id_stand ? { ...a, ...jsonData } : a)
-            );
 
             // Llamamos al PUT
             const res = await PATCHStands(id_stand, token, jsonData);
@@ -244,7 +187,6 @@ export default function Stands({ initialData, initialPage, initialPageSize, init
         }
     };
 
-
     function handleQR(stand: Stands) {
         setQrValue(stand.qr_code || '');
         setSelectedStands(stand);
@@ -254,7 +196,7 @@ export default function Stands({ initialData, initialPage, initialPageSize, init
     return (
         <section className="w-[90vw] md:w-[70vw] lg:w-[78vw] xl:w-[82vw] space-y-6 overflow-auto">
             <div className="flex flex-col gap-3">
-                <h1 className="text-xl sm:text-2xl font-bold text-purple-400 mb-2">Actividades</h1>
+                <h1 className="text-xl sm:text-2xl font-bold text-purple-400 mb-2">Stands</h1>
                 <p className="text-gray-500 text-sm sm:text-base">
                     ¡Puedes ingresar tus actividades para tu proximo evento!
                 </p>
@@ -311,7 +253,6 @@ export default function Stands({ initialData, initialPage, initialPageSize, init
 
             <ModalVista isOpen={vista} onClose={() => setVista(false)} stand={selectedStands} />
 
-
             <div className="w-full overflow-x-auto rounded-lg shadow">
                 <table className="w-full min-w-[1100px] border border-gray-200 rounded-lg text-xs sm:text-sm shadow-sm">
                     <thead className="bg-violet-500 text-violet-50 uppercase text-[10px] sm:text-xs font-semibold">
@@ -364,14 +305,9 @@ export default function Stands({ initialData, initialPage, initialPageSize, init
                                                 <FaUserEdit size={20} className="text-purple-400 hover:text-violet-400 transition" />
                                             </button>
 
-
-
                                             <button onClick={() => handledelete(stad.id_stand!)}>
                                                 <MdDelete size={20} className="text-gray-400 hover:text-red-800 transition block" />
                                             </button>
-
-
-
                                         </div>
                                     </td>
                                 </tr>
@@ -387,37 +323,37 @@ export default function Stands({ initialData, initialPage, initialPageSize, init
                 </table>
             </div>
 
-
             {/* 🔽 Paginador */}
             {/* Paginador (usar props del SSR) */}
-            {totalPages && totalPages > 1 && (
-                <div className="flex flex-col sm:flex-row justify-between items-center mt-6 gap-4">
-                    <div className="text-sm text-gray-600">
-                        Página {initialPage} de {totalPages}
-                        {typeof totalCount === "number" ? <> · {totalCount} registros</> : null}
+            {
+                (totalPages ? totalPages : 1) > 1 && (
+                    <div className="flex flex-col sm:flex-row justify-between items-center mt-6 gap-4">
+                        <div className="text-sm text-gray-600">
+                            Página {initialPage} de {totalPages}
+                            {typeof totalCount === "number" ? <> · {totalCount} registros</> : null}
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={handlePreviousPage}
+                                disabled={isFirst && isPending}
+                                className={`flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${isFirst ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-violet-100 text-violet-600 hover:bg-violet-200"}`}
+                            >
+                                {isPending ? "Cargando…" : "Anterior"}
+                            </button>
+
+                            <button
+                                onClick={handleNextPage}
+                                disabled={isLast && isPending}
+                                className={`flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${isLast ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-violet-100 text-violet-600 hover:bg-violet-200"
+                                    }`}
+                            >
+                                {isPending ? "Cargando…" : "Siguiente"}
+                            </button>
+                        </div>
                     </div>
-
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={handlePreviousPage}
-                            disabled={isFirst && isPending}
-                            className={`flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${isFirst ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-violet-100 text-violet-600 hover:bg-violet-200"}`}
-                        >
-                            {isPending ? "Cargando…" : "Anterior"}
-                        </button>
-
-                        <button
-                            onClick={handleNextPage}
-                            disabled={isLast && isPending}
-                            className={`flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${isLast ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-violet-100 text-violet-600 hover:bg-violet-200"
-                                }`}
-                        >
-                            {isPending ? "Cargando…" : "Siguiente"}
-                        </button>
-                    </div>
-                </div>
-            )}
-
+                )
+            }
 
             {editModal && selectedStands && (
                 <div className="fixed inset-0 bg-purple/50 backdrop-blur-sm flex items-center justify-center z-50">
@@ -575,11 +511,6 @@ export default function Stands({ initialData, initialPage, initialPageSize, init
                                 <label className="text-sm font-medium text-gray-400">Ponderable</label>
                             </div>
                         </div>
-
-
-
-
-
                         {/* Botones */}
                         <div className="md:col-span-2 flex justify-end gap-2 mt-4">
                             <button
@@ -600,6 +531,7 @@ export default function Stands({ initialData, initialPage, initialPageSize, init
 
                 </div>
             )}
+
             {qrModalOpen && (
                 <div
                     className="fixed inset-0 z-[60] flex items-center justify-center bg-purple-/50 backdrop-blur-sm px-4"
@@ -678,8 +610,6 @@ export default function Stands({ initialData, initialPage, initialPageSize, init
                     </div>
                 </div>
             )}
-
         </section>
-
     )
 }

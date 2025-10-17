@@ -315,7 +315,7 @@ export default function Asisten({ initialData, initialPage, initialPageSize, ini
 
       {/* 🔽 Paginador */}
       {/* Paginador (usar props del SSR) */}
-      {totalPages && totalPages > 1 && (
+      {(totalPages ? totalPages : 1) > 1 && (
         <div className="flex flex-col sm:flex-row justify-between items-center mt-6 gap-4">
           <div className="text-sm text-gray-600">
             Página {initialPage} de {totalPages}

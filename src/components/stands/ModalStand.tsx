@@ -328,7 +328,5 @@ export default function ModalStand({
                 </div>
             )}
         </>
-
-
     );
 }
