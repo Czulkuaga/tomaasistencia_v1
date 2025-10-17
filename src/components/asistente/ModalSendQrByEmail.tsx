@@ -75,7 +75,7 @@ function makeTicketHtml({ nombre, evento, qrUrl, bannerUrl }: {
               <p style="margin:6px 0 20px 0; font-size:14px; color:#475569;">Presenta este código QR en el acceso al evento</p>
               
               <!-- QR -->
-              <img src="${qrUrl}" alt="Código QR" width="160" height="160" style="display:block; margin:auto; border:0;">
+              QRField
             </td>
           </tr>
 
