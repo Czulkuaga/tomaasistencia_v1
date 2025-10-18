@@ -344,8 +344,8 @@ export default function Asisten({ initialData, initialPage, initialPageSize, ini
       )}
 
       {editModal && selectedAsistente && (
-        <div className="fixed inset-0 bg-purple/50 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-xl w-full max-w-2xl relative">
+        <div className="fixed inset-0 bg-purple/50 backdrop-blur-sm flex items-center justify-center z-50 overflow-y-scroll py-10">
+          <div className="bg-white p-6 rounded-xl w-11/12 relative">
             <h2 className="text-xl font-bold mb-4 text-center text-purple-400">Editar Asistente</h2>
             <form
               onSubmit={(e) => {
@@ -364,146 +364,150 @@ export default function Asisten({ initialData, initialPage, initialPageSize, ini
                 handleUpdate(selectedAsistente!.id_asistente!, fd);
                 setEditModal(false);
               }}
-              className="grid grid-cols-1 md:grid-cols-2 gap-4"
             >
-              {/* Evento - ocupa todo el ancho */}
-              <div className="flex flex-col md:col-span-2">
-                <label className="text-sm font-medium text-gray-400 mb-1">Evento</label>
-                <select
-                  name="event"
-                  defaultValue={selectedAsistente.event}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Evento - ocupa todo el ancho */}
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-gray-400 mb-1">Evento</label>
+                  <select
+                    name="event"
+                    defaultValue={selectedAsistente.event}
 
-                  className="w-full border border-violet-100 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-900"
-                >
-                  {idevent.map((eve) => (
-                    <option key={eve.id_event} value={eve.id_event}>
-                      {eve.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              {/* Nombre */}
-              <div className="flex flex-col">
-                <label className="text-sm font-medium text-gray-400 mb-1">Nombre</label>
-                <input
-                  name="name"
-                  defaultValue={selectedAsistente.name}
-                  placeholder="Nombre"
-                  maxLength={100}
-                  onChange={(e) => setContadorName(e.target.value.length)}
-                  className="w-full border border-violet-100 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-900"
-                  aria-readonly="true"
-                />
-                <div className="text-right text-xs text-gray-500 mt-1">
-                  {contadorname}/100
+                    className="w-full border border-violet-100 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-900"
+                  >
+                    {idevent.map((eve) => (
+                      <option key={eve.id_event} value={eve.id_event}>
+                        {eve.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
-              </div>
-
-
-              {/* Tipo identificación */}
-              <div className="flex flex-col">
-                <label className="text-sm font-medium text-gray-400 mb-1">Tipo Identificación</label>
-                <select
-                  name="identification_type"
-                  className="w-full border border-violet-100 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-900"
-                  value={selectedAsistente?.identification_type || ""}
-                  onChange={(e) =>
-                    setSelectedAsistente((prev) =>
-                      prev ? { ...prev, identification_type: e.target.value } : prev
-                    )
-                  }
-                >
-                  <option value="">Seleccione tipo</option>
-                  <option value="CC">CC</option>
-                  <option value="TI">TI</option>
-                  <option value="PASSPORT">Pasaporte</option>
-                </select>
-              </div>
-              {/* Número identificación */}
-              <div className="flex flex-col">
-                <label className="text-sm font-medium text-gray-400 mb-1">Número Identificación</label>
-                <div className="relative">
+                {/* Nombre */}
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-gray-400 mb-1">Nombre</label>
                   <input
-                    name="identification_number"
-                    defaultValue={selectedAsistente?.identification_number}
-                    placeholder="Ej: 12345678"
-                    maxLength={ID_MAX}
-                    onChange={(e) => setContadorId(e.target.value.replace(/\D/g, "").length)} // opcional: solo dígitos
-                    className="w-full border border-violet-100 rounded-lg p-2 pr-14 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-900"
+                    name="name"
+                    defaultValue={selectedAsistente.name}
+                    placeholder="Nombre"
+                    maxLength={100}
+                    onChange={(e) => setContadorName(e.target.value.length)}
+                    className="w-full border border-violet-100 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-900"
+                    aria-readonly="true"
                   />
-                  <span className="absolute right-2 bottom-1.5 text-xs text-gray-500">
-                    {contadorId}/{ID_MAX}
-                  </span>
+                  <div className="text-right text-xs text-gray-500 mt-1">
+                    {contadorname}/100
+                  </div>
                 </div>
-              </div>
 
-              {/* Teléfono */}
-              <div className="flex flex-col">
-                <label className="text-sm font-medium text-gray-400 mb-1">Celular</label>
-                <div className="relative">
+                {/* Tipo identificación */}
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-gray-400 mb-1">Tipo Identificación</label>
+                  <select
+                    name="identification_type"
+                    className="w-full border border-violet-100 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-900"
+                    value={selectedAsistente?.identification_type || ""}
+                    onChange={(e) =>
+                      setSelectedAsistente((prev) =>
+                        prev ? { ...prev, identification_type: e.target.value } : prev
+                      )
+                    }
+                  >
+                    <option value="">Seleccione tipo</option>
+                    <option value="CC">CC</option>
+                    <option value="TI">TI</option>
+                    <option value="PASSPORT">Pasaporte</option>
+                  </select>
+                </div>
+                {/* Número identificación */}
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-gray-400 mb-1">Número Identificación</label>
+                  <div className="relative">
+                    <input
+                      name="identification_number"
+                      defaultValue={selectedAsistente?.identification_number}
+                      placeholder="Ej: 12345678"
+                      maxLength={ID_MAX}
+                      onChange={(e) => setContadorId(e.target.value.replace(/\D/g, "").length)} // opcional: solo dígitos
+                      className="w-full border border-violet-100 rounded-lg p-2 pr-14 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-900"
+                    />
+                    <span className="absolute right-2 bottom-1.5 text-xs text-gray-500">
+                      {contadorId}/{ID_MAX}
+                    </span>
+                  </div>
+                </div>
+
+
+                {/* Teléfono */}
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-gray-400 mb-1">Celular</label>
+                  <div className="relative">
+                    <input
+                      name="phone"
+                      defaultValue={selectedAsistente?.phone?.toString()}
+                      placeholder="Teléfono"
+                      maxLength={PHONE_MAX}
+                      onChange={(e) => setContadorPhone(e.target.value.replace(/\D/g, "").length)} // opcional
+                      className="w-full border border-violet-100 rounded-lg p-2 pr-14 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-900"
+                    />
+                    <span className="absolute right-2 bottom-1.5 text-xs text-gray-500">
+                      {contadorPhone}/{PHONE_MAX}
+                    </span>
+                  </div>
+                </div>
+                {/* Empresa */}
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-gray-400 mb-1">Empresa</label>
                   <input
-                    name="phone"
-                    defaultValue={selectedAsistente?.phone?.toString()}
-                    placeholder="Teléfono"
-                    maxLength={PHONE_MAX}
-                    onChange={(e) => setContadorPhone(e.target.value.replace(/\D/g, "").length)} // opcional
-                    className="w-full border border-violet-100 rounded-lg p-2 pr-14 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-900"
+                    name="company_name"
+                    defaultValue={selectedAsistente.company_name}
+                    placeholder="Nombre Empresa"
+                    className="w-full border border-violet-100 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-900"
+
                   />
-                  <span className="absolute right-2 bottom-1.5 text-xs text-gray-500">
-                    {contadorPhone}/{PHONE_MAX}
-                  </span>
                 </div>
-              </div>
 
-              {/* Empresa */}
-              <div className="flex flex-col">
-                <label className="text-sm font-medium text-gray-400 mb-1">Empresa</label>
-                <input
-                  name="company_name"
-                  defaultValue={selectedAsistente.company_name}
-                  placeholder="Nombre Empresa"
-                  className="w-full border border-violet-100 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-900"
 
-                />
-              </div>
-              {/* Asistencia */}
-              <div className="flex flex-col">
-                <label className="text-sm font-medium text-gray-400 mb-1">Tipo Asistencia</label>
-                <select
-                  name="asistencia"
-                  value={selectedAsistente?.asistencia ?? ""}
-                  onChange={(e) =>
-                    setSelectedAsistente(prev =>
-                      prev ? { ...prev, asistencia: e.target.value } : prev
-                    )
-                  }
-                  className="w-full border border-violet-100 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-900"
-                >
-                  <option value="">Seleccione Asistencia</option>
-                  {ASISTENCIA_OPTIONS.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.value}</option>
-                  ))}
-                </select>
-              </div>
+                {/* Asistencia */}
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-gray-400 mb-1">Tipo Asistencia</label>
+                  <select
+                    name="asistencia"
+                    value={selectedAsistente?.asistencia ?? ""}
+                    onChange={(e) =>
+                      setSelectedAsistente(prev =>
+                        prev ? { ...prev, asistencia: e.target.value } : prev
+                      )
+                    }
+                    className="w-full border border-violet-100 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-900"
+                  >
+                    <option value="">Seleccione Asistencia</option>
+                    {ASISTENCIA_OPTIONS.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.value}</option>
+                    ))}
+                  </select>
+                </div>
 
-              {/* Email - ocupa todo el ancho */}
-              <div className="flex flex-col md:col-span-2">
-                <label className="text-sm font-medium text-gray-400 mb-1">Correo</label>
-                <input
-                  name="email"
-                  defaultValue={selectedAsistente.email}
-                  placeholder="Correo"
-                  type="text"
-                  className="w-full border border-violet-100 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-900"
-                />
+                {/* Email - ocupa todo el ancho */}
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-gray-400 mb-1">Correo</label>
+                  <input
+                    name="email"
+                    defaultValue={selectedAsistente.email}
+                    placeholder="Correo"
+                    type="text"
+                    className="w-full border border-violet-100 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-900"
+                  />
 
-                {formErrors.email && (
-                  <p className="text-red-500 text-sm mt-1">{formErrors.email}</p>
-                )}
+                  {formErrors.email && (
+                    <p className="text-red-500 text-sm mt-1">{formErrors.email}</p>
+                  )}
+
+                </div>
 
               </div>
+
               {/* Activo */}
-              <div className="flex items-center gap-2 col-span-2 mt-2">
+              <div className="flex items-center gap-2 col-span-2 mt-4">
                 <input
                   type="checkbox"
                   checked={selectedAsistente?.is_active || false}
@@ -516,8 +520,9 @@ export default function Asisten({ initialData, initialPage, initialPageSize, ini
                 />
                 <label className="text-sm font-medium text-gray-700">Activo</label>
               </div>
+
               {/* Botones */}
-              <div className="md:col-span-2 flex justify-end gap-2 mt-4">
+              <div className="md:col-span-2 flex justify-start gap-2 mt-4">
                 <button
                   type="button"
                   onClick={() => setEditModal(false)}

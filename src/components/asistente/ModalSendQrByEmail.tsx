@@ -122,7 +122,7 @@ export const ModalSendQrByEmail = ({ onClose, token, qrValue, attendee }: Props)
 
   return (
     <>
-      <div className="fixed inset-0 bg-purple/50 backdrop-blur-sm flex items-center justify-center z-50">
+      <div className="fixed inset-0 bg-purple/50 backdrop-blur-sm flex items-center justify-center z-50 overflow-y-scroll pt-10">
 
         <div className="flex justify-center p-4 mt-10">
 

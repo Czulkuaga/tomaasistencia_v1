@@ -204,11 +204,11 @@ export function ChangeEventImage({ selectedEvent, setOpenModalEventImage, onSave
 
     return (
         <div
-            className="fixed inset-0 z-[60] flex items-center justify-center bg-purple/50 backdrop-blur-sm px-4"
+            className="fixed inset-0 z-[60] flex items-center justify-center bg-purple/50 backdrop-blur-sm px-4 py-6 overflow-y-scroll pt-16"
             onClick={() => setOpenModalEventImage(false)}
         >
             <div
-                className="bg-white rounded-2xl w-full max-w-2xl p-6 relative shadow-xl"
+                className="bg-white rounded-2xl w-full max-w-2xl px-6 relative shadow-xl py-8"
                 onClick={(e) => e.stopPropagation()}
             >
                 <button
