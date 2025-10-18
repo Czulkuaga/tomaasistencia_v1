@@ -1,4 +1,8 @@
+"use client"
+
 import { Event } from "@/types/events";
+import Image from "next/image";
+import { useEffect, useState } from "react";
 import QRCode from "react-qr-code"
 
 interface Props {
@@ -8,31 +12,57 @@ interface Props {
 }
 
 type Asistencia = {
-    id_asistente?: number;
-    identification_type?: string;
-    identification_number?: string;
-    name?: string;
-    country?: string;
-    phone?: number;
-    company_name?: string;
-    email?: string;
-    qr_code: string;
-    token?: string;
-    event?: number;
-    start_time?: string;
-    is_active?: boolean;
-    asistencia?: string;
+  id_asistente?: number;
+  identification_type?: string;
+  identification_number?: string;
+  name?: string;
+  country?: string;
+  phone?: number;
+  company_name?: string;
+  email?: string;
+  qr_code: string;
+  token?: string;
+  event?: number;
+  start_time?: string;
+  is_active?: boolean;
+  asistencia?: string;
 }
 
 export const HtmlQr = ({ qrValue, attendee, event }: Props) => {
-  // console.log(attendee)
+
+  const [objectUrl, setObjectUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    const v = event.event_image; // v: string | File | Blob | undefined
+    if (!v) { setObjectUrl(null); return; }
+
+    if (typeof v === "string") {
+      setObjectUrl(v); // URL http(s) o data:
+      return;
+    }
+
+    // v es File | Blob
+    const url = URL.createObjectURL(v);
+    setObjectUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [event.event_image]);
+
   return (
     <>
       <div className="max-w-[360px] rounded-xl bg-gradient-to-b from-[#0f172a] to-[#1e293b] p-1">
         <div className="max-w-[360px] bg-white border-2 overflow-hidden shadow-2xl">
           {/* Image */}
-          <div className="h-[180px] bg-center bg-cover bg-no-repeat bg-[url('https://placehold.org/600x250/1e40af/FFFFFF?text=Auditoria-Test')]">
-          </div>
+          {
+            objectUrl && (
+              <Image
+                alt={event.name ?? ""}
+                src={objectUrl ?? ""}
+                width={360}
+                height={180}
+              />
+            )
+          }
+
 
           {/* Cuerpo */}
           <div className="text-center py-[12px] px-[24px]">
@@ -41,7 +71,7 @@ export const HtmlQr = ({ qrValue, attendee, event }: Props) => {
             <QRCode
               value={qrValue || ' '}
               size={240}
-              style={{ height: '200px', maxWidth: '200px', margin:"0 auto" }}
+              style={{ height: '200px', maxWidth: '200px', margin: "0 auto" }}
             />
             {/* <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=Estefania+Alcaraz+-+VII+Congreso+de+Auditoria" alt="QR test" className="w-[160px] h-[160px] mx-auto" /> */}
           </div>

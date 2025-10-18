@@ -6,11 +6,14 @@ import { DELETEvent } from "@/actions/feature/event-action";
 import { IoEye, IoQrCode } from "react-icons/io5";
 import { FaUserEdit } from "react-icons/fa";
 import { MdDelete } from "react-icons/md";
+import { RiImageAddFill } from "react-icons/ri";
 import ModalVista from "@/components/eventos/ModalVista";
 import ModalCreateE from "@/components/eventos/ModalCreateE";
 import ModalEditEvent from "./ModalEditEvent";
 import { QrCode } from "./QrCode";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { ChangeEventImage } from "./ChangeEventImage";
+import { PATCHEvent } from "@/actions/feature/event-action";
 
 interface Props {
   initialData?: Event[]
@@ -36,6 +39,7 @@ export default function EventosClient({ initialData, initialPage, initialPageSiz
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [vista, setVista] = useState(false);
   const [openQrModal, setQrModalOpen] = useState(false);
+  const [openModalEventImage, setOpenModalEventImage] = useState(false)
 
   // UI optimista: eliminar
   const handleDelete = async (id_event: number) => {
@@ -51,6 +55,11 @@ export default function EventosClient({ initialData, initialPage, initialPageSiz
   const openModalToQr = (event: Event) => {
     setSelectedEvent(event);
     setQrModalOpen(true);
+  }
+
+  const openModalChangeEventImage = (event: Event) => {
+    setSelectedEvent(event);
+    setOpenModalEventImage(true);
   }
 
   // Util para construir/actualizar la querystring
@@ -85,10 +94,22 @@ export default function EventosClient({ initialData, initialPage, initialPageSiz
         page_size: initialPageSize,
       });
     }
-  }, [initialPage, totalPages, initialPageSize,setQuery]);
+  }, [initialPage, totalPages, initialPageSize, setQuery]);
 
   const isFirst = initialPage ? initialPage <= 1 : true;
   const isLast = initialPage && totalPages ? initialPage >= totalPages : true;
+
+  const handlerUpdateImage = async (eventSelected:Event, urlImage: string) => {
+
+    const eventId=eventSelected?.id_event ?? 0
+    const eventDataToUpdate = {...eventSelected,event_image:urlImage}
+
+    try {
+      const res = await PATCHEvent(eventId, token, eventDataToUpdate);
+    } catch (error) {
+      console.log(error)
+    }
+  }
 
   return (
     <section className="space-y-6 overflow-auto w-full">
@@ -127,12 +148,17 @@ export default function EventosClient({ initialData, initialPage, initialPageSiz
                   <td className="border border-gray-300 p-1 text-left max-w-[150px] truncate">{eve.end_time}</td>
                   <td className="border border-gray-300 p-1 text-left max-w-[150px] truncate">{eve.is_active ? "Sí" : "No"}</td>
                   <td className="border border-gray-300 p-1 text-left max-w-[150px] truncate">{eve.is_public_event ? "Sí" : "No"}</td>
-                  <td className="border border-gray-300 p-1 text-left max-w-[150px] truncate">
+                  <td className="border border-gray-300 p-1 text-left max-w-[190px] truncate">
                     <div className="flex justify-center items-center gap-2 sm:gap-4">
 
                       <button onClick={() => openModalToQr(eve)}>
                         <IoQrCode size={20} className="text-purple-950 hover:text-violet-500 transition block" />
                       </button>
+
+                      <button onClick={() => openModalChangeEventImage(eve)}>
+                        <RiImageAddFill size={20} />
+                      </button>
+
                       <button
                         onClick={() => { setSelectedEvent(eve); setVista(true); }}
                         title="Ver información"
@@ -224,6 +250,16 @@ export default function EventosClient({ initialData, initialPage, initialPageSiz
             selectedEvent={selectedEvent}
             qrValue={selectedEvent ? `${REGISTER_URL}/register/asistente/${selectedEvent.id_event}` : ''}
             setQrModalOpen={setQrModalOpen}
+          />
+        )
+      }
+
+      {
+        selectedEvent && openModalEventImage && (
+          <ChangeEventImage
+            selectedEvent={selectedEvent}
+            setOpenModalEventImage={setOpenModalEventImage}
+            onSaved={(selectedEvent, url) => handlerUpdateImage(selectedEvent, url)} 
           />
         )
       }

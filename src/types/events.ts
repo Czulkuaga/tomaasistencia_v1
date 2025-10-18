@@ -14,6 +14,7 @@ export interface Event {
   total_scoring_activities?: string,
   is_active: boolean;
   is_public_event: boolean;
+  event_image?:EventImage
 }
 
 export interface EventResponse {
@@ -23,3 +24,5 @@ export interface EventResponse {
   page_size: number;
   total_pages: number;
 }
+
+export type EventImage = string | File | Blob;

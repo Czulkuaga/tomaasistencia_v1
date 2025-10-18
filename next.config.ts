@@ -19,6 +19,16 @@ const nextConfig: NextConfig = {
         hostname: 'is1-ssl.mzstatic.com',
         pathname: '/**'
       },
+      {
+        protocol: 'https',
+        hostname: 'filebrowser.aliatic.app',
+        pathname: '/**'
+      },
+      {
+        protocol: 'https',
+        hostname: 'placehold.org',
+        pathname: '/**'
+      }
     ],
   },
 };
