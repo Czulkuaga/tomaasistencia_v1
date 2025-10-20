@@ -65,8 +65,8 @@ export function SurveyDetailsModal({ survey, isOpen, onClose }: SurveyDetailsMod
     const questions = Array.isArray(survey.questions) ? survey.questions : [];
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-6 z-50">
+            <div className="bg-white rounded-lg max-w-4xl w-full max-h-[96vh] overflow-hidden">
                 <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
                     <h2 className="text-xl font-semibold text-gray-900">Detalles de la Encuesta</h2>
                     <button
@@ -146,11 +146,11 @@ export function SurveyDetailsModal({ survey, isOpen, onClose }: SurveyDetailsMod
                     </div>
                 </div>
 
-                <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
+                <div className="px-6 pt-4 border-t border-gray-200 bg-gray-50">
                     <div className="flex justify-end">
                         <button
                             onClick={onClose}
-                            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
+                            className="inline-flex items-center px-4 py-2 mb-4 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
                         >
                             Cerrar
                         </button>

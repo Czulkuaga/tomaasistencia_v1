@@ -32,7 +32,7 @@ export default async function EncuestaPage({ searchParams }: PageProps) {
 
   const data = await GETSurveys({ token, search: search.trim(), page: page, page_size: page_size, event: eventId, });
 
-  console.log("Surveys data:", data);
+  // console.log("Surveys data:", data);
 
   return (
     <Survey

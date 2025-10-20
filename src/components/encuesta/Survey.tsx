@@ -29,7 +29,19 @@ type SurveyItem = {
     name: string;
     description: string;
     question_count?: number;
+    questions?: Question[]
 };
+
+type Question = {
+    id_question: number;
+    options: OptionItem[],
+    order: number,
+    qtype: string,
+    required: boolean,
+    text: string
+}
+
+type OptionItem = string | { id?: number | string; value?: string };
 
 interface EventItem {
     id_event: number;
@@ -124,14 +136,18 @@ export default function Survey({ initialData, initialPage, initialPageSize, init
 
     const handleViewSurvey = async (survey: SurveyItem) => {
         try {
-            const token = getCookie("authToken") as string;
+            // const token = getCookie("authToken") as string;
             const tree = await GETSurveyWithTree(survey.id_survey);
             const questions = tree?.questions ?? [];
+
+            console.log(questions)
 
             setSelectedSurvey({
                 ...survey,
                 name: tree?.name ?? survey.name,
-                description: tree?.description ?? ""
+                description: tree?.description ?? "",
+                question_count: tree?.questions.length,
+                questions:questions
             });
             setIsDetailsModalOpen(true);
         } catch (e) {
