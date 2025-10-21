@@ -79,36 +79,6 @@ export const GETSurveyDetail = async (id_survey: number, token: string) => {
   }
 };
 
-export async function POSTattendeeByEmail(email: string, activity_id: number) {
-  try {
-    const res = await fetch(`${BASE_URL}/api/surveys/attendeebyemail/`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      cache: "no-store",
-      body: JSON.stringify({
-        email: (email || "").trim().toLowerCase(),
-        activity_id,
-      }),
-    });
-
-    if (!res.ok) {
-      const text = await res.text().catch(() => "");
-      throw new Error(`HTTP ${res.status}: ${text || res.statusText}`);
-    }
-
-    const data = await res.json()
-    const response = {
-      ok:true,
-      data:data
-    }
-    return response
-  } catch (err) {
-    console.error("POSTattendeeByEmail error:", err);
-    return { ok: false, error: err instanceof Error ? err.message : "Unknown error" };
-  }
-}
-
-//backup
 // export async function POSTattendeeByEmail(email: string, activity_id: number) {
 //   try {
 //     const res = await fetch(`${BASE_URL}/api/surveys/attendeebyemail/`, {
@@ -126,12 +96,42 @@ export async function POSTattendeeByEmail(email: string, activity_id: number) {
 //       throw new Error(`HTTP ${res.status}: ${text || res.statusText}`);
 //     }
 
-//     return await res.json(); // <- devuelve el JSON del backend
+//     const data = await res.json()
+//     const response = {
+//       ok:true,
+//       data:data
+//     }
+//     return response
 //   } catch (err) {
 //     console.error("POSTattendeeByEmail error:", err);
 //     return { ok: false, error: err instanceof Error ? err.message : "Unknown error" };
 //   }
 // }
+
+//backup
+export async function POSTattendeeByEmail(email: string, activity_id: number) {
+  try {
+    const res = await fetch(`${BASE_URL}/api/surveys/attendeebyemail/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      cache: "no-store",
+      body: JSON.stringify({
+        email: (email || "").trim().toLowerCase(),
+        activity_id,
+      }),
+    });
+
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      throw new Error(`HTTP ${res.status}: ${text || res.statusText}`);
+    }
+
+    return await res.json(); // <- devuelve el JSON del backend
+  } catch (err) {
+    console.error("POSTattendeeByEmail error:", err);
+    return { ok: false, error: err instanceof Error ? err.message : "Unknown error" };
+  }
+}
 
 
 // src/actions/feature/survey-action.ts
