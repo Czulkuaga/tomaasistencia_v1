@@ -2,8 +2,8 @@
 import AnswerSurvey from "@/components/encuesta/AnswerSurvey";
 
 export default async function AnswerSurveyPage({
-                                                   params,
-                                               }: {
+    params,
+}: {
     params: Promise<{ id: string }>;
 }) {
     const { id } = await params;

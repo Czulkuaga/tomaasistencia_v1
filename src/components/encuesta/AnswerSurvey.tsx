@@ -162,17 +162,17 @@ export default function AnswerSurvey({ surveyId }: { surveyId: string }) {
             case "multiple_choice":
                 return val instanceof Set && val.size > 0;
             case "single_choice":
+                return typeof val === "number";
             case "yes_no":
-                return typeof val === "number" && val !== null;
+                return typeof val === "number";
             default:
                 return false;
         }
     };
 
     const missingQuestions = useMemo(
-
-        () => (survey ? survey.questions.filter((q) => !isQuestionAnswered(q)) : []),
-        [survey]
+        () => (survey ? survey.questions.filter((q) => q.required && !isQuestionAnswered(q)) : []),
+        [survey, answers] // <- agregar answers aquí
     );
     const isComplete = missingQuestions.length === 0;
 
@@ -315,9 +315,9 @@ export default function AnswerSurvey({ surveyId }: { surveyId: string }) {
         }
 
         // LOG CLIENTE: meta y respuestas
-        console.log("[AnswerSurvey] Meta para envío:", meta);
-        console.log("[AnswerSurvey] Respuestas (raw):", answers);
-        console.log("[AnswerSurvey] Respuestas (serialize):", serializeAnswersForLog(answers));
+        // console.log("[AnswerSurvey] Meta para envío:", meta);
+        // console.log("[AnswerSurvey] Respuestas (raw):", answers);
+        // console.log("[AnswerSurvey] Respuestas (serialize):", serializeAnswersForLog(answers));
 
         if (!meta.attendee || !meta.type || !meta.id_value) {
             alert("Faltan parámetros en la URL: att y uno de atv/std/deliv.");
@@ -355,8 +355,8 @@ export default function AnswerSurvey({ surveyId }: { surveyId: string }) {
                         });
                     });
                 } else if (q.type === "single_choice" || q.type === "yes_no") {
-                    const optId = (val as number | null) ?? null;
-                    if (optId) {
+                    const optId = (val as number | null);
+                    if (typeof optId === "number") { // <- en lugar de if (optId)
                         payload.answers.push({
                             survey: survey.id,
                             question: q.id,
@@ -382,14 +382,14 @@ export default function AnswerSurvey({ surveyId }: { surveyId: string }) {
             }
 
             // LOG CLIENTE: payload final
-            console.log("[AnswerSurvey] Payload final a enviar:", JSON.stringify(payload, null, 2));
-            console.log("[AnswerSurvey] Total respuestas a enviar:", payload.answers.length);
+            // console.log("[AnswerSurvey] Payload final a enviar:", JSON.stringify(payload, null, 2));
+            // console.log("[AnswerSurvey] Total respuestas a enviar:", payload.answers.length);
 
             // Llamar server action
             const res = await POSTSurveyAnswersBulk(payload);
 
             // LOG CLIENTE: respuesta de server action
-            console.log("[AnswerSurvey] Resultado server action:", res);
+            // console.log("[AnswerSurvey] Resultado server action:", res);
 
             if (!res?.ok) {
                 console.error("[AnswerSurvey] Envío fallido:", res);
