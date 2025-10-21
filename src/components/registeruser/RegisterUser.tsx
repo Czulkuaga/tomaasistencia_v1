@@ -1,107 +1,82 @@
 // components/registeruser/RegisterUser.tsx
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import { getCookie } from "cookies-next";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { BrowserMultiFormatReader, IScannerControls } from "@zxing/browser";
 import { POSTCrontol } from "@/actions/feature/control-action";
 import { POSTCrontolStand } from "@/actions/feature/control-stand-action";
 import { POSTCrontolDeliverables } from "@/actions/feature/control-deliverables-action";
 import { POSTattendeeByEmail } from "@/actions/survey/survey-action";
-import { GETActivityPublic } from "@/actions/feature/activity-action";
-import { GETStandPublic } from "@/actions/feature/stands-action";
-import { GETDeliverablesPublic } from "@/actions/feature/deliverables-action";
 
-import estilo from "./RegisterUser.module.css";
-
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/i;
-const asUrl = (t: string) => { try { return new URL(t); } catch { return null; } };
-
-// QR URL → params
-function parseFromUrl(u: URL) {
-    const atv = u.searchParams.get("atv") || undefined;
-    const std = u.searchParams.get("std") || undefined;
-    const deliv = u.searchParams.get("deliv") || undefined;
-    const email = u.searchParams.get("email") || undefined;
-    const att =
-        u.searchParams.get("att") ||
-        u.searchParams.get("attendee_id") ||
-        u.searchParams.get("id") ||
-        undefined;
-
-    return {
-        atv: atv ? Number(atv) : undefined,
-        std: std ? Number(std) : undefined,
-        deliv: deliv ? Number(deliv) : undefined,
-        email: email || undefined,
-        attendeeId: att && Number.isFinite(Number(att)) ? Number(att) : undefined,
-        activityTitle: u.searchParams.get("activity") || undefined,
-        eventTitle: u.searchParams.get("event") || undefined,
-    };
+interface Props {
+    activity?: Actividad | null;
+    stand?: any;
+    deliverable?: any;
+    atvId?: number | null;
+    stdId?: number | null;
+    delivId?: number | null;
 }
 
-// de texto: "ATT|<id>|<email?>"
-function parseAttPayload(text: string) {
-    const p = text.split("|");
-    if ((p[0] || "").toUpperCase() !== "ATT") return { attendeeId: undefined, email: undefined };
-    const id = Number(p[1]);
-    return {
-        attendeeId: Number.isFinite(id) ? id : undefined,
-        email: p[2] ? String(p[2]) : undefined,
-    };
+type Actividad = {
+    activity_name?: string;
+    event_name?: string;
+    survey_id?: number;
+    error?: string;
+};
+
+interface FormErrors {
+    formError?: string;
+    [key: string]: string | undefined;
 }
 
 type Ctx = "activity" | "stand" | "deliverables";
 
 type SurveyPromptState = {
     open: boolean;
-    message: string;           // "¡Registro guardado con éxito!" o "Ya se encuentra registrado."
-    surveyUrl?: string;        // si hay id_survey
-    attendeeName?: string;     // opcional, para mostrar
+    message: string;
+    surveyUrl?: string;
+    attendeeName?: string;
 };
 
-export default function RegisterUser() {
-    const searchParams = useSearchParams();
+const EMAIL_RE = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
 
-    // Contextos
-    const [actId, setActId] = useState<number | undefined>(undefined);
-    const [standId, setStandId] = useState<number | undefined>(undefined);
-    const [entregableId, setEntregableId] = useState<number | undefined>(undefined);
-    const [ctx, setCtx] = useState<Ctx>("activity");
+// Reemplaza parseAttPayload por esta versión fuerte:
+function parseAttFromText(text: string): { attendeeId: number; eventId?: number } | null {
+    const parts = text.trim().split("|");
+    if (!parts.length || parts[0].toUpperCase() !== "ATT") return null;
 
-    // Nombres
-    const [activityName, setActivityName] = useState<string | undefined>(undefined);
-    const [standName, setStandName] = useState<string | undefined>(undefined);
-    const [entregableName, setEntregableName] = useState<string | undefined>(undefined);
-    const [eventName, setEventName] = useState<string | undefined>(undefined);
-    const [eventId, setEventId] = useState<number | undefined>(undefined);
+    const attendeeId = Number(parts[1]);
+    const eventId = Number(parts[2]); // opcional: úsalo solo si tu backend lo pide
 
-    // UI feedback actual (mensajes legacy en tarjetas)
-    const [msg, setMsg] = useState<string | null>(null);
-    const [msgKind, setMsgKind] = useState<"success" | "already" | null>(null);
-    const [err, setErr] = useState<string | null>(null);
-    const [sending, setSending] = useState(false);
+    if (!Number.isFinite(attendeeId)) return null;
+    return {
+        attendeeId,
+        eventId: Number.isFinite(eventId) ? eventId : undefined,
+    };
+}
 
-    // NUEVO: alerta superior con botón "Encuesta" / "Cancelar"
+export default function RegisterUser({ activity, stand, deliverable, atvId, stdId, delivId }: Props) {
+
+    // Contexto desde props (se usa en UI y en registro)
+    const ctx: Ctx =
+        atvId ? "activity" : stdId ? "stand" : delivId ? "deliverables" : "activity";
+
+    // UI feedback
+    const [error, setError] = useState<FormErrors>({});
     const [surveyPrompt, setSurveyPrompt] = useState<SurveyPromptState | null>(null);
-
-    // Error parámetros
-    const [paramError, setParamError] = useState<string | null>(null);
 
     // Escáner
     const [running, setRunning] = useState(false);
     const [scanMsg, setScanMsg] = useState<string | null>(null);
     const [processingQr, setProcessingQr] = useState(false);
-    const [surveyId, setSurveyId] = useState<number | undefined>(undefined);
     const videoRef = useRef<HTMLVideoElement | null>(null);
     const controlsRef = useRef<IScannerControls | null>(null);
 
-    // Email manual
+    // Email manual (UI)
     const [email, setEmail] = useState("");
+    const [errorManualForm, setErrorManualForm] = useState<FormErrors>({})
 
-    // Utilidad: construir URL de encuesta
+    // URL de encuesta (construcción se mantiene igual)
     const buildSurveyUrl = ({
         surveyId,
         ctx,
@@ -119,387 +94,278 @@ export default function RegisterUser() {
     }) => {
         const origin =
             (typeof window !== "undefined" && window.location?.origin) || "";
-        const base = origin || ""; // si no hay origin, dejamos la URL relativa
-
+        const base = origin || "";
         let query = "";
         if (ctx === "activity" && atv) query = `atv=${atv}&att=${attendee}`;
         if (ctx === "stand" && std) query = `std=${std}&att=${attendee}`;
         if (ctx === "deliverables" && deliv) query = `deliv=${deliv}&att=${attendee}`;
-
         return `${base}/register/encuesta/${surveyId}?${query}`;
     };
 
-    // Lee parámetros (?atv | ?std | ?deliv)
-    useEffect(() => {
-        const activity = searchParams.get("atv");
-        const stands = searchParams.get("std");
-        const entregable = searchParams.get("deliv");
+    // ---------- Escáner ----------
+    const pickBackCamera = (devices: MediaDeviceInfo[]) => {
+        const byLabel = devices.find((d) =>
+            /back|rear|environment|trás|tras|atras/i.test(d.label)
+        );
+        return byLabel?.deviceId || devices[0]?.deviceId;
+    };
 
-        if (activity) setActId(Number(activity));
-        if (stands) setStandId(Number(stands));
-        if (entregable) setEntregableId(Number(entregable));
-
-        const hasAtv = !!activity;
-        const hasStd = !!stands;
-        const hasDeliv = !!entregable;
-        const count = [hasAtv, hasStd, hasDeliv].filter(Boolean).length;
-
-        if (count > 1) {
-            setParamError("Los parametros estan mal por favor revisa.");
-        } else {
-            setParamError(null);
-            if (hasDeliv) setCtx("deliverables");
-            else if (hasStd) setCtx("stand");
-            else if (hasAtv) setCtx("activity");
-        }
-
-        const aName = searchParams.get("activity") || undefined;
-        const eName = searchParams.get("event") || undefined;
-        if (aName) setActivityName(prev => prev ?? aName);
-        if (eName) setEventName(prev => prev ?? eName);
-    }, [searchParams]);
-
-    // Carga info de actividad
-    useEffect(() => {
-        if (!actId) return;
-        (async () => {
-            try {
-                const res = await GETActivityPublic(actId);
-                if (res?.activity_name) setActivityName(res.activity_name);
-                if (res?.event_name) setEventName(res.event_name);
-                if (res?.survey_id) setSurveyId(Number(res.survey_id));
-                if (Number.isFinite(Number(res?.event_id))) setEventId(Number(res.event_id));
-            } catch (e) {
-                console.error("GETActivityPublic error:", e);
-            }
-        })();
-    }, [actId]);
-
-    // Carga info de stand
-    useEffect(() => {
-        if (!standId) return;
-        (async () => {
-            try {
-                const res = await GETStandPublic(standId);
-                if (res?.stand_name) setStandName(res.stand_name);
-                if (res?.event_name) setEventName(res.event_name);
-                if (res?.survey_id) setSurveyId(Number(res.survey_id));
-                if (Number.isFinite(Number(res?.event_id))) setEventId(Number(res.event_id));
-            } catch (e) {
-                console.error("GETStandPublic error:", e);
-            }
-        })();
-    }, [standId]);
-
-    // Carga info de entregable
-    useEffect(() => {
-        if (!entregableId) return;
-        (async () => {
-            try {
-                const r = await GETDeliverablesPublic(entregableId);
-                const name = r?.entregable_name ?? r?.deliverable_name ?? r?.name;
-                if (name) setEntregableName(name);
-                if (r?.event_name) setEventName(r.event_name);
-                if (r?.survey_id) setSurveyId(Number(r.survey_id));
-                if (Number.isFinite(Number(r?.event_id))) setEventId(Number(r.event_id));
-            } catch (e) {
-                console.error("GETDeliverablesPublic error:", e);
-            }
-        })();
-    }, [entregableId]);
-
-    // Escanear QR
-    async function startScanner() {
-        if (running || controlsRef.current) return;
-        setErr(null); setMsg(null); setMsgKind(null);
-        setSurveyPrompt(null);
-        setScanMsg("Cámara activa. Apunta al QR…");
+    const stopScanner = useCallback(() => {
+        try {
+            controlsRef.current?.stop();
+        } catch { }
+        controlsRef.current = null;
+        setRunning(false);
         setProcessingQr(false);
+    }, []);
 
+    const startScanner = useCallback(async () => {
         if (running || controlsRef.current) return;
-        setRunning(true);
+        setError({});
+        setSurveyPrompt(null);
+        setScanMsg("Activando cámara…");
+        setProcessingQr(false);
 
         const reader = new BrowserMultiFormatReader();
         try {
             const devices = await BrowserMultiFormatReader.listVideoInputDevices();
             if (!devices.length) throw new Error("No se encontraron cámaras (revisa permisos del navegador).");
-            const back = devices.find(d => /back|rear|environment|trás|tras|atras/i.test(d.label));
-            const preferred = back?.deviceId || devices[0]?.deviceId;
+            const preferred = pickBackCamera(devices);
+            setRunning(true);
+            setScanMsg("Cámara activa. Apunta al QR…");
 
-            const controls = await reader.decodeFromVideoDevice(preferred, videoRef.current!, async (result: any) => {
-                if (!result || processingQr) return;
+            const controls = await reader.decodeFromVideoDevice(
+                preferred,
+                videoRef.current!,
+                async (result: any) => {
+                    if (!result || processingQr) return;
 
-                setProcessingQr(true);
-                const raw: string = result.getText();
-                setScanMsg("Leyendo QR…");
+                    setProcessingQr(true);
+                    setScanMsg("Leyendo QR…");
 
-                let nextActId: number | undefined;
-                let nextStandId: number | undefined;
-                let nextDelivId: number | undefined;
-                let attendeeIdFromQR: number | undefined;
-                let emailFromQR: string | undefined;
+                    const rawText: string = result.text ?? result.getText?.() ?? "";
+                    // 1) Parse ATT|id|eventId|...
+                    const att = parseAttFromText(rawText);
 
-                const url = asUrl(raw);
-                if (url) {
-                    const parsed = parseFromUrl(url);
-                    nextActId = parsed.atv;
-                    nextStandId = parsed.std;
-                    nextDelivId = parsed.deliv;
-                    attendeeIdFromQR = parsed.attendeeId;
-                    emailFromQR = parsed.email || undefined;
-
-                    if (parsed.activityTitle) setActivityName(parsed.activityTitle);
-                    if (parsed.eventTitle) setEventName(parsed.eventTitle);
-
-                    if (nextActId) {
-                        setActId(nextActId);
-                        try {
-                            const r = await GETActivityPublic(nextActId);
-                            if (r?.activity_name) setActivityName(r.activity_name);
-                            if (r?.event_name) setEventName(r.event_name);
-                            if (Number.isFinite(Number(r?.event_id))) setEventId(Number(r.event_id));
-                        } catch { }
+                    // Si no cumple el formato ATT → seguimos leyendo (o loguea para depurar)
+                    if (!att) {
+                        setProcessingQr(false);
+                        setScanMsg("QR leído sin datos válidos. Continúa apuntando…");
+                        return;
                     }
 
-                    if (nextStandId) {
-                        setStandId(nextStandId);
-                        try {
-                            const r = await GETStandPublic(nextStandId);
-                            if (r?.stand_name) setStandName(r.stand_name);
-                            if (r?.event_name) setEventName(r.event_name);
-                            if (Number.isFinite(Number(r?.event_id))) setEventId(Number(r.event_id));
-                        } catch { }
-                    }
+                    try {
+                        if (atvId) {
+                            setScanMsg("Procesando QR… ⏳");
+                            const res = await POSTCrontol({
+                                activity_id: Number(atvId),
+                                attendee_id: att.attendeeId,
+                                event_id: att.eventId,
+                            } as any);
 
-                    if (nextDelivId) {
-                        setEntregableId(nextDelivId);
-                        try {
-                            const r = await GETDeliverablesPublic(nextDelivId);
-                            const name = r?.entregable_name ?? r?.deliverable_name ?? r?.name;
-                            if (name) setEntregableName(name);
-                            if (r?.event_name) setEventName(r.event_name);
-                            if (Number.isFinite(Number(r?.event_id))) setEventId(Number(r.event_id));
-                        } catch { }
-                    }
+                            // console.log("POSTCrontol", res);
 
-                    if (nextStandId && !nextActId) setCtx("stand");
-                    if (nextActId && !nextStandId) setCtx("activity");
-                    if (nextDelivId) setCtx("deliverables");
-                } else {
-                    const attPayload = parseAttPayload(raw);
-                    attendeeIdFromQR = attPayload.attendeeId ?? attendeeIdFromQR;
-                    emailFromQR = attPayload.email ?? emailFromQR;
-                    if (!attendeeIdFromQR && !emailFromQR && EMAIL_RE.test(raw.trim())) {
-                        emailFromQR = raw.trim();
+                            setProcessingQr(false);
+                            // setScanMsg(null);
+
+                            if (res.ok === false && res.status !== 400) {
+                                const msg =
+                                    `Error ${res.status}: ${res.statusText || "desconocido"
+                                    } - ${res.result || "No se pudo registrar."}`;
+                                throw new Error(msg);
+                            }
+
+                            if (res.ok === false && res.status === 400 && activity?.survey_id) {
+                                setScanMsg(null);
+                                const surveyUrl = buildSurveyUrl({
+                                    surveyId: activity.survey_id,
+                                    ctx: "activity",
+                                    atv: Number(atvId),
+                                    attendee: att.attendeeId,
+                                });
+                                setSurveyPrompt({
+                                    open: true,
+                                    message: "¡Ya estás registrado!",
+                                    surveyUrl,
+                                    attendeeName: "", // opcional, si tienes nombre del asistente
+                                });
+                                return;
+                            }
+
+                            if (res.ok === true && res.status === 201 && activity?.survey_id) {
+                                setScanMsg(null);
+                                const surveyUrl = buildSurveyUrl({
+                                    surveyId: activity.survey_id,
+                                    ctx: "activity",
+                                    atv: Number(atvId),
+                                    attendee: att.attendeeId,
+                                });
+                                setSurveyPrompt({
+                                    open: true,
+                                    message: "¡Registro guardado con éxito!",
+                                    surveyUrl,
+                                    attendeeName: "", // opcional, si tienes nombre del asistente
+                                });
+                                return;
+                            }
+
+
+                            setScanMsg("¡Registro guardado con éxito!");
+                        } else {
+                            setProcessingQr(false);
+                            // por si alguien abre esta pantalla sin atvId
+                            throw new Error("Falta el id de la actividad (atvId).");
+                        }
+
+                        // UI éxito
+                        // Si tienes encuesta:
+                        // const surveyId = activity?.survey_id;
+                        // if (surveyId) {
+                        //   const surveyUrl = buildSurveyUrl({
+                        //     surveyId,
+                        //     ctx: "activity",
+                        //     atv: Number(atvId),
+                        //     attendee: att.attendeeId,
+                        //   });
+                        //   setSurveyPrompt({ open: true, message: "¡Registro guardado con éxito!", surveyUrl });
+                        // }
+
+                    } catch (e: any) {
+                        const msg = String(e?.message || "No se pudo registrar.");
+                        setError({ formError: msg });
+                        setScanMsg(null);
+                    } finally {
+                        setProcessingQr(false);
+                        stopScanner(); // UX móvil: cerramos cámara tras registrar
+                        setTimeout(() => setScanMsg(null), 5000); // limpiar msg tras un tiempo
                     }
                 }
-
-                // solo contexto sin id/email → seguir leyendo
-                if (!attendeeIdFromQR && !emailFromQR) {
-                    setProcessingQr(false);
-                    setScanMsg(nextStandId ? "QR de stand leído." : "QR de actividad leído.");
-                    return;
-                }
-
-                setScanMsg("Procesando QR… ⏳");
-                await registerAttendance({ attendeeId: attendeeIdFromQR, email: emailFromQR });
-
-                setProcessingQr(false);
-                stopScanner();
-                setScanMsg(null);
-            });
-
+            );
             controlsRef.current = controls;
         } catch (e: any) {
             const m = String(e?.message || e || "");
-            setErr(/permission|notallowed|denied/i.test(m)
-                ? "Permiso de cámara denegado. Actívalo en el navegador y recarga."
-                : m || "No se pudo activar la cámara."
-            );
+            setError({
+                formError: /permission|notallowed|denied/i.test(m)
+                    ? "Permiso de cámara denegado. Actívalo en el navegador y recarga."
+                    : m || "No se pudo activar la cámara.",
+            });
             setScanMsg(null);
             setRunning(false);
         }
-    }
-
-    function stopScanner() {
-        try { controlsRef.current?.stop(); } catch { }
-        controlsRef.current = null;
-        setRunning(false);
-    }
-    useEffect(() => () => stopScanner(), []);
-
-    // Registro (manual o QR)
-    async function registerAttendance(opts: { email?: string; attendeeId?: number }) {
-        if (paramError) { setErr(paramError); return; }
-        if (ctx === "activity" && !actId) { setErr("Falta la actividad (?atv)."); return; }
-        if (ctx === "stand" && !standId) { setErr("Falta el stand (?std)."); return; }
-        if (ctx === "deliverables" && !entregableId) { setErr("Falta el entregable (?deliv)."); return; }
-
-        const emailOk = (opts.email || "").trim().toLowerCase();
-        const token = (getCookie("authToken") as string) || "";
-        if (!opts.attendeeId && !EMAIL_RE.test(emailOk)) {
-            setErr("Ingresa un correo válido o un id de asistente.");
-            return;
-        }
-
-        try {
-            setSending(true);
-            setErr(null); setMsg(null); setMsgKind(null);
-            setSurveyPrompt(null);
-
-            let res: any;
-
-            if (ctx === "stand") {
-                // asegurar event_id local antes de enviar
-                let evId = eventId;
-                if (!Number.isFinite(Number(evId)) && standId) {
-                    try {
-                        const r = await GETStandPublic(standId);
-                        const maybe = Number(r?.event_id);
-                        if (Number.isFinite(maybe)) {
-                            evId = maybe;
-                            setEventId(maybe);
-                        }
-                    } catch { }
-                }
-
-                res = await POSTCrontolStand({
-                    
-                    stand_id: Number(standId),token,
-                    event_id: Number(evId),
-                    ...(opts.attendeeId
-                        ? { attendee_id: opts.attendeeId }
-                        : { attendee_email: emailOk }),
-                } as any);
-
-            } else if (ctx === "deliverables") {
-                res = await POSTCrontolDeliverables({
-                    deliverable_id: Number(entregableId),token,
-                    ...(opts.attendeeId
-                        ? { attendee_id: opts.attendeeId }
-                        : { attendee_email: emailOk }),
-                } as any);
-
-            } else {
-                res = await POSTCrontol({
-                    activity_id: Number(actId),token,
-                    ...(opts.attendeeId
-                        ? { attendee_id: opts.attendeeId }
-                        : { attendee_email: emailOk }),
-                } as any);
-            }
-
-            const code = res?.code ?? res?.error_code ?? res?.statusCode;
-            const text = `${res?.message ?? ""} ${res?.error ?? ""}`.toLowerCase();
-            const duplicate =
-                res?.already === true ||
-                code === 409 ||
-                code === "DUPLICATE" ||
-                code === "ALREADY_REGISTERED" ||
-                /ya se encuentra registrado|ya esta registrado|already|duplicate/.test(text) ||
-                (Array.isArray(res?.non_field_errors) && res.non_field_errors.some((s: string) => /unique/i.test(s)));
-
-            // Extra: ids para armar URL de encuesta
-            const attendeeIdFromRes: number | undefined =
-                Number.isFinite(Number(res?.attendee)) ? Number(res.attendee) : opts.attendeeId;
-
-            const id_survey: number | undefined =
-                Number.isFinite(Number(res?.id_survey)) ? Number(res.id_survey) : undefined;
-
-            // Determinar id_value (según contexto y shape que devuelva backend)
-            const id_value =
-                ctx === "activity"
-                    ? (Number.isFinite(Number(res?.activity)) ? Number(res.activity) :
-                        Number.isFinite(Number(res?.activity_id)) ? Number(res.activity_id) : actId)
-                    : ctx === "stand"
-                        ? (Number.isFinite(Number(res?.stand)) ? Number(res.stand) :
-                            Number.isFinite(Number(res?.stand_id)) ? Number(res.stand_id) : standId)
-                        : (Number.isFinite(Number(res?.deliverable)) ? Number(res.deliverable) :
-                            Number.isFinite(Number(res?.deliverable_id)) ? Number(res.deliverable_id) : entregableId);
-
-            const surveyUrl =
-                surveyId && attendeeIdFromRes && id_value
-                    ? buildSurveyUrl({
-                        surveyId,
-                        ctx,
-                        atv: ctx === "activity" ? id_value : undefined,
-                        std: ctx === "stand" ? id_value : undefined,
-                        deliv: ctx === "deliverables" ? id_value : undefined,
-                        attendee: attendeeIdFromRes,
-                    })
-                    : undefined;
-
-            // UI según duplicado o éxito
-            if (duplicate) {
-                setErr(null);
-                setMsg("Ya se encuentra registrado.");
-                setMsgKind("already");
-
-                // Mostrar alerta con botón de encuesta si trae survey
-                setSurveyPrompt({
-                    open: true,
-                    message: "Ya se encuentra registrado.",
-                    surveyUrl,
-                    attendeeName: res?.attendee_name,
-                });
-                setEmail("");
-                return;
-            }
-
-            if (res && typeof res === "object" && "error" in res && res.error) {
-                throw new Error(String(res.error));
-            }
-
-            setErr(null);
-            setMsg("¡Registro guardado con éxito!");
-            setMsgKind("success");
-
-            // Mostrar alerta con botón de encuesta si aplica
-            setSurveyPrompt({
-                open: true,
-                message: "¡Registro guardado con éxito!",
-                surveyUrl,
-                attendeeName: res?.attendee_name,
-            });
-
-            setEmail("");
-        } catch (e: any) {
-            const t = String(e?.message || "").toLowerCase();
-            if (t.includes("409") || t.includes("already") || t.includes("duplic") || /unique/.test(t)) {
-                setErr(null);
-                setMsg("Ya se encuentra registrado.");
-                setMsgKind("already");
-                setSurveyPrompt({
-                    open: true,
-                    message: "Ya se encuentra registrado.",
-                    surveyUrl: undefined,
-                });
-            } else {
-                setMsgKind(null);
-                setErr(String(e?.message || "No se pudo registrar."));
-            }
-        } finally {
-            setSending(false);
-        }
-    }
+    }, [
+        running,
+        processingQr,
+        ctx,
+        atvId,
+        stdId,
+        delivId,
+        activity?.survey_id,
+        stopScanner,
+    ]);
 
     // Submit manual
     const onSubmitManual = async (e: React.FormEvent) => {
         e.preventDefault();
-        const data = await POSTattendeeByEmail(email, Number(actId))
-        await registerAttendance({ email, attendeeId: data.attendee_id});
+        setErrorManualForm({})
+        setScanMsg(null)
+
+        const res = await POSTattendeeByEmail(email, Number(atvId))
+        // await registerAttendance({ email, attendeeId: data.attendee_id });
+        console.log(res)
+        if (res.ok === false && 'error' in res) {
+            setErrorManualForm({ formError: res.error });
+            return;
+        }
+        if (res.ok === true && 'data' in res) {
+            setScanMsg("¡Registro guardado con éxito!")
+            const surveyUrl = buildSurveyUrl({
+                surveyId: activity?.survey_id ?? 0,
+                ctx: "activity",
+                atv: Number(atvId),
+                attendee: res.data.attendee_id,
+            });
+            setSurveyPrompt({
+                open: true,
+                message: "¡Registro guardado con éxito!",
+                surveyUrl,
+                attendeeName: "", // opcional, si tienes nombre del asistente
+            });
+            return;
+        }
+
+
+        // if (atvId) {
+        //     setScanMsg("Procesando QR… ⏳");
+        //     const res = await POSTCrontol({
+        //         activity_id: Number(atvId),
+        //         attendee_id: att.attendeeId,
+        //         event_id: att.eventId,
+        //     } as any);
+
+        //     // console.log("POSTCrontol", res);
+
+        //     setProcessingQr(false);
+        //     // setScanMsg(null);
+
+        //     if (res.ok === false && res.status !== 400) {
+        //         const msg =
+        //             `Error ${res.status}: ${res.statusText || "desconocido"
+        //             } - ${res.result || "No se pudo registrar."}`;
+        //         throw new Error(msg);
+        //     }
+
+        //     if (res.ok === false && res.status === 400 && activity?.survey_id) {
+        //         setScanMsg(null);
+        //         const surveyUrl = buildSurveyUrl({
+        //             surveyId: activity.survey_id,
+        //             ctx: "activity",
+        //             atv: Number(atvId),
+        //             attendee: att.attendeeId,
+        //         });
+        //         setSurveyPrompt({
+        //             open: true,
+        //             message: "¡Ya estás registrado!",
+        //             surveyUrl,
+        //             attendeeName: "", // opcional, si tienes nombre del asistente
+        //         });
+        //         return;
+        //     }
+
+        //     if (res.ok === true && res.status === 201 && activity?.survey_id) {
+        //         setScanMsg(null);
+        //         const surveyUrl = buildSurveyUrl({
+        //             surveyId: activity.survey_id,
+        //             ctx: "activity",
+        //             atv: Number(atvId),
+        //             attendee: att.attendeeId,
+        //         });
+        //         setSurveyPrompt({
+        //             open: true,
+        //             message: "¡Registro guardado con éxito!",
+        //             surveyUrl,
+        //             attendeeName: "", // opcional, si tienes nombre del asistente
+        //         });
+        //         return;
+        //     }
+
+
+        //     setScanMsg("¡Registro guardado con éxito!");
+        // }
     };
 
-    // Encabezado
-    const displayEvent = eventName ?? (eventId ? `Evento ${eventId}` : "—");
-    const displayContext =
-        ctx === "stand"
-            ? (standName ?? (standId ? `Stand ${standId}` : "—"))
-            : ctx === "deliverables"
-                ? (entregableName ?? (entregableId ? `Entregable ${entregableId}` : "—"))
-                : (activityName ?? (actId ? `Actividad ${actId}` : "—"));
+    // Limpieza al desmontar
+    useEffect(() => () => stopScanner(), [stopScanner]);
 
-    // Handlers alerta de encuesta
+    // Pausar si pestaña no visible (evita locks en iOS y ahorra batería)
+    useEffect(() => {
+        const onVis = () => {
+            if (document.hidden) stopScanner();
+        };
+        document.addEventListener("visibilitychange", onVis);
+        return () => document.removeEventListener("visibilitychange", onVis);
+    }, [stopScanner]);
+
+    // Survey prompt handlers (mantengo tu API)
     const closeSurveyPrompt = () => setSurveyPrompt(null);
     const goToSurvey = () => {
         if (surveyPrompt?.surveyUrl) {
@@ -507,143 +373,373 @@ export default function RegisterUser() {
         }
     };
 
-    return (
-        <div className={estilo.container}>
-            <h1 className={estilo.pageTitle}>
-                <span className={estilo.eventText}>{displayEvent}</span>
-                <span className={`${estilo.contextText} ${estilo[ctx]}`}>
-                    {displayContext}
-                </span>
-            </h1>
+    // Manejo de errores desde props de entrada
+    useEffect(() => {
+        if (stdId && stand?.error) {
+            setError({ formError: stand.error });
+        }
+        if (atvId && activity?.error) {
+            setError({ formError: activity.error });
+        }
+        if (delivId && deliverable?.error) {
+            setError({ formError: deliverable.error });
+        }
+    }, [activity, stand, deliverable, stdId, atvId, delivId]);
 
-            {/* ALERTA SUPERIOR con botones (Encuesta / Cancelar) */}
-            {surveyPrompt?.open && (
-                <div
-                    style={{
-                        width: "min(960px, 96vw)",    // grande y responsivo
-                        maxHeight: "90dvh",           // usa dvh para móviles modernos
-                        overflowY: "auto",
-                        borderRadius: 16,
-                        border: "1px solid #E9D5FF",
-                        background: "#FAF5FF",
-                        padding: 24,
-                        boxShadow: "0 12px 28px rgba(0,0,0,0.18)",
-                        boxSizing: "border-box"
-                    }}
-                >
-                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                        <div style={{ fontWeight: 700, color: "#6D28D9", fontSize: 16 }}>
-                            {surveyPrompt.message}
+    return (
+        <main className="min-h-dvh bg-gradient-to-b from-white via-indigo-50/50 to-white text-slate-800">
+            {/* Header */}
+            <header className="sticky top-0 z-10 backdrop-blur supports-[backdrop-filter]:bg-white/70 border-b border-indigo-100">
+                <div className="mx-auto max-w-6xl px-4 sm:px-6 py-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                            <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-slate-900">
+                                {atvId && activity
+                                    ? activity.activity_name
+                                    : stdId && stand
+                                        ? stand.stand_name
+                                        : delivId && deliverable
+                                            ? deliverable.entregable_name ??
+                                            deliverable.deliverable_name ??
+                                            deliverable.name ??
+                                            "Registro"
+                                            : "Registro"}
+                            </h1>
+                            <p className="text-sm text-slate-600">
+                                {atvId && activity
+                                    ? activity.event_name
+                                    : stdId && stand
+                                        ? stand.event_name
+                                        : delivId && deliverable
+                                            ? deliverable.event_name
+                                            : "Gestión de asistencias"}
+                            </p>
                         </div>
-                        {surveyPrompt.attendeeName && (
-                            <div style={{ color: "#4B5563", fontSize: 14 }}>
-                                Asistente: <strong>{surveyPrompt.attendeeName}</strong>
+                        <span className="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-white px-3 py-1 text-xs font-medium text-indigo-700 shadow-sm">
+                            <span className="h-2 w-2 rounded-full bg-indigo-500" />
+                            {ctx === "activity"
+                                ? "Actividad"
+                                : ctx === "stand"
+                                    ? "Stand"
+                                    : "Entregable"}
+                        </span>
+                    </div>
+                </div>
+            </header>
+
+            {/* Content */}
+            <section className="mx-auto max-w-6xl px-4 sm:px-6 py-6 sm:py-4 flex justify-center">
+                <div className="max-w-md gap-6 p-4 sm:p-6">
+                    {/* Section Errors */}
+                    <div>
+                        {error.formError && (
+                            <div className="mb-4 rounded-lg bg-red-50 p-4">
+                                <div className="flex">
+                                    <div className="flex-shrink-0">
+                                        <svg
+                                            className="h-5 w-5 text-red-400"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            viewBox="0 0 20 20"
+                                            fill="currentColor"
+                                            aria-hidden="true"
+                                        >
+                                            <path
+                                                fillRule="evenodd"
+                                                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                                            ></path>
+                                        </svg>
+                                    </div>
+                                    <div className="ml-3">
+                                        <h3 className="text-sm font-medium text-red-800">Error</h3>
+                                        <div className="mt-2 text-sm text-red-700">
+                                            <p>{error.formError}</p>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         )}
-                        <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
-                            {surveyPrompt.surveyUrl && (
-                                <button
-                                    type="button"
-                                    onClick={goToSurvey}
-                                    className={estilo.btnencuesta}
-                                >
-                                    Ir a la encuesta
-                                </button>
-                            )}
-                            <button
-                                type="button"
-                                onClick={closeSurveyPrompt}
-                                className={estilo.btnGhost}
+
+                        {scanMsg && (
+                            <div className="mb-4 rounded-lg bg-blue-50 p-4">
+                                <div className="flex">
+                                    <div className="flex-shrink-0">
+                                        <svg
+                                            className="h-5 w-5 text-blue-400"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            viewBox="0 0 20 20"
+                                            fill="currentColor"
+                                            aria-hidden="true"
+                                        >
+                                            <path
+                                                fillRule="evenodd"
+                                                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                                            ></path>
+                                        </svg>
+                                    </div>
+                                    <div className="ml-3">
+                                        <h3 className="text-sm font-medium text-blue-800">Info</h3>
+                                        <div className="mt-2 text-sm text-blue-700">
+                                            <p>{scanMsg}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    <div>
+                        {/* ALERTA SUPERIOR con botones (Encuesta / Cancelar) */}
+                        {surveyPrompt?.open && (
+                            <div
+                                style={{
+                                    width: "w-full",    // grande y responsivo
+                                    maxHeight: "90dvh",           // usa dvh para móviles modernos
+                                    overflowY: "auto",
+                                    borderRadius: 16,
+                                    border: "1px solid #E9D5FF",
+                                    background: "#FAF5FF",
+                                    padding: 24,
+                                    boxShadow: "0 12px 28px rgba(0,0,0,0.18)",
+                                    boxSizing: "border-box"
+                                }}
                             >
-                                Cancelar
-                            </button>
+                                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                                    <div style={{ fontWeight: 700, color: "#6D28D9", fontSize: 16 }}>
+                                        {surveyPrompt.message}
+                                    </div>
+                                    {surveyPrompt.attendeeName && (
+                                        <div style={{ color: "#4B5563", fontSize: 14 }}>
+                                            Asistente: <strong>{surveyPrompt.attendeeName}</strong>
+                                        </div>
+                                    )}
+                                    <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+                                        {surveyPrompt.surveyUrl && (
+                                            <button
+                                                type="button"
+                                                onClick={goToSurvey}
+                                                className="cursor-pointer inline-flex items-center justify-center rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition active:scale-[.98] hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
+                                            >
+                                                Ir a la encuesta
+                                            </button>
+                                        )}
+                                        <button
+                                            type="button"
+                                            onClick={closeSurveyPrompt}
+                                            className="cursor-pointer inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
+                                        >
+                                            Cancelar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+
+                    {/* Columna: QR */}
+                    {!error.formError && (
+                        <div className="space-y-3">
+                            <h2 className="text-base sm:text-lg font-semibold text-slate-900 flex items-center gap-2">
+                                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-indigo-100 text-indigo-700 text-xs">
+                                    QR
+                                </span>
+                                Leer QR (
+                                {ctx === "activity"
+                                    ? "Actividad"
+                                    : ctx === "stand"
+                                        ? "Stand"
+                                        : "Entregable"}
+                                )
+                            </h2>
+
+                            <div className="rounded-2xl border border-dashed border-indigo-200 bg-indigo-50/40 p-3">
+                                {/* Vista previa cámara */}
+                                <div className="aspect-video w-full rounded-xl bg-white shadow-inner border border-indigo-100 overflow-hidden">
+                                    <video
+                                        ref={videoRef}
+                                        autoPlay
+                                        muted
+                                        playsInline
+                                        className={`h-full w-full object-cover ${!running ? "opacity-30" : "opacity-100"
+                                            }`}
+                                    />
+                                </div>
+
+                                <div className="mt-3 flex flex-wrap items-center gap-3">
+                                    {!running ? (
+                                        <button
+                                            type="button"
+                                            onClick={startScanner}
+                                            className="cursor-pointer inline-flex items-center justify-center rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition active:scale-[.98] hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
+                                        >
+                                            Activar cámara
+                                        </button>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            onClick={stopScanner}
+                                            className="cursor-pointer inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
+                                        >
+                                            Detener
+                                        </button>
+                                    )}
+                                </div>
+
+                                {/* Mensajes/estado */}
+                                {scanMsg ? (
+                                    <p className="mt-2 text-sm text-slate-600">{scanMsg}</p>
+                                ) : (
+                                    <p className="mt-2 text-xs text-slate-500">
+                                        Escanea el QR del asistente para registrar asistencia
+                                        automáticamente.
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* Columna: Registro manual (igual que lo tenías) */}
+                            <div className="space-y-3">
+                                <h2 className="text-base sm:text-lg font-semibold text-slate-900 flex items-center gap-2">
+                                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-violet-100 text-violet-700 text-xs">
+                                        @
+                                    </span>
+                                    Registro manual
+                                </h2>
+
+                                <div>
+                                    {errorManualForm.formError && (
+                                        <div className="mb-4 rounded-lg bg-red-50 p-4">
+                                            <div className="flex">
+                                                <div className="flex-shrink-0">
+                                                    <svg
+                                                        className="h-5 w-5 text-red-400"
+                                                        xmlns="http://www.w3.org/2000/svg"
+                                                        viewBox="0 0 20 20"
+                                                        fill="currentColor"
+                                                        aria-hidden="true"
+                                                    >
+                                                        <path
+                                                            fillRule="evenodd"
+                                                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                                                        ></path>
+                                                    </svg>
+                                                </div>
+                                                <div className="ml-3">
+                                                    <h3 className="text-sm font-medium text-red-800">Error</h3>
+                                                    <div className="mt-2 text-sm text-red-700">
+                                                        <p>{errorManualForm.formError}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {scanMsg && (
+                                        <div className="mb-4 rounded-lg bg-blue-50 p-4">
+                                            <div className="flex">
+                                                <div className="flex-shrink-0">
+                                                    <svg
+                                                        className="h-5 w-5 text-blue-400"
+                                                        xmlns="http://www.w3.org/2000/svg"
+                                                        viewBox="0 0 20 20"
+                                                        fill="currentColor"
+                                                        aria-hidden="true"
+                                                    >
+                                                        <path
+                                                            fillRule="evenodd"
+                                                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                                                        ></path>
+                                                    </svg>
+                                                </div>
+                                                <div className="ml-3">
+                                                    <h3 className="text-sm font-medium text-blue-800">Info</h3>
+                                                    <div className="mt-2 text-sm text-blue-700">
+                                                        <p>{scanMsg}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <form
+                                    className="rounded-2xl border border-violet-200 bg-violet-50/30 p-4 sm:p-5"
+                                    onSubmit={onSubmitManual}
+                                >
+                                    <label
+                                        htmlFor="email"
+                                        className="block text-sm font-medium text-slate-700"
+                                    >
+                                        Correo del asistente
+                                    </label>
+                                    <div className="mt-2 relative">
+                                        <input
+                                            id="email"
+                                            type="email"
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                            placeholder="nombre@correo.com"
+                                            className="w-full rounded-xl border border-violet-200 bg-white px-4 py-3 text-slate-800 shadow-sm outline-none placeholder:text-slate-400 focus:border-violet-400 focus:ring-2 focus:ring-violet-300"
+                                        />
+                                    </div>
+
+                                    <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700">
+                                                Tipo
+                                            </label>
+                                            <div className="mt-2 flex gap-2">
+                                                <span className="inline-flex items-center rounded-full bg-white border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700">
+                                                    {ctx === "activity"
+                                                        ? "Actividad"
+                                                        : ctx === "stand"
+                                                            ? "Stand"
+                                                            : "Entregable"}
+                                                </span>
+                                                {/* <span className="text-xs text-slate-500 self-center">
+                                                    (desde props)
+                                                </span> */}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700">
+                                                Referencia
+                                            </label>
+                                            <input
+                                                type="text"
+                                                disabled
+                                                value={
+                                                    (ctx === "activity" && atvId) ||
+                                                    (ctx === "stand" && stdId) ||
+                                                    (ctx === "deliverables" && delivId) ||
+                                                    ""
+                                                }
+                                                className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-800 shadow-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-300"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        type="submit"
+                                        className="cursor-pointer mt-5 inline-flex w-full items-center justify-center rounded-xl bg-violet-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition active:scale-[.98] hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-violet-500/40"
+                                    >
+                                        Registrar asistencia
+                                    </button>
+
+                                    <p className="mt-2 text-xs text-slate-500">
+                                        Se enviará un correo de confirmación al asistente con el
+                                        detalle del registro.
+                                    </p>
+                                </form>
+                            </div>
                         </div>
-                    </div>
-                </div>
-            )}
-
-            {paramError && <div className={estilo.alertError}>{paramError}</div>}
-            {msg && <div className={msgKind === "already" ? estilo.alertAlready : estilo.alertSuccess}>{msg}</div>}
-            {err && <div className={estilo.alertError}>{err}</div>}
-
-            <div className={estilo.card}>
-                {/* Fila: título + botón */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', marginBottom: 10 }}>
-                    <div className={estilo.sectionTitle} style={{ margin: 0 }}>
-                        {ctx === "stand" ? "Leer QR (Asistente)"
-                            : ctx === "deliverables" ? "Leer QR (Asistente)"
-                                : "Leer QR (Asistente)"}
-                    </div>
-
-                    {!running ? (
-                        <button
-                            type="button"
-                            onClick={startScanner}
-                            disabled={sending}
-                            className={estilo.btn}
-                            style={{ marginLeft: 12 }}
-                        >
-                            Activar cámara
-                        </button>
-                    ) : (
-                        <button
-                            type="button"
-                            onClick={stopScanner}
-                            className={estilo.btnGhost}
-                            style={{ marginLeft: 12 }}
-                        >
-                            Detener
-                        </button>
                     )}
-                </div>
 
-                {/* Abajo: mensaje + video */}
-                {scanMsg && <div className={estilo.scanMsg}>{scanMsg}</div>}
-                <video
-                    ref={videoRef}
-                    autoPlay
-                    muted
-                    playsInline
-                    className={`${estilo.video} ${!running ? estilo.videoHidden : ""}`}
-                />
-            </div>
-
-            <div className={estilo.card}>
-                <div className={estilo.sectionTitle}>
-                    {ctx === "stand" ? "Registro manual"
-                        : ctx === "deliverables" ? "Información del entregable"
-                            : "Registro manual"}
+                    {/* Footer ligero */}
+                    <div className="mt-6 text-center text-xs text-slate-500">
+                        © {new Date().getFullYear()} ALIATIC SAS — Módulo de registro
+                    </div>
                 </div>
-                <form onSubmit={onSubmitManual} className={estilo.formGrid}>
-                    <input
-                        type="email"
-                        placeholder="Correo del asistente"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        disabled={
-                            Boolean(paramError)
-                            || (ctx === "activity" && !actId)
-                            || (ctx === "stand" && !standId)
-                            || (ctx === "deliverables" && !entregableId)
-                            || sending
-                        }
-                        className={estilo.input}
-                    />
-                    <button
-                        type="submit"
-                        disabled={
-                            Boolean(paramError)
-                            || (ctx === "activity" && !actId)
-                            || (ctx === "stand" && !standId)
-                            || (ctx === "deliverables" && !entregableId)
-                            || sending
-                        }
-                        className={estilo.btn}
-                    >
-                        {sending ? "Registrando…" : "Registrar asistencia"}
-                    </button>
-                </form>
-            </div>
-        </div>
+            </section>
+        </main>
     );
 }
