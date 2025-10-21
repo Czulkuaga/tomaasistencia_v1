@@ -98,7 +98,7 @@ export const GETDeliverablesPublic = async (deliv: number) => {
     });
     // console.log(response)
     const entregables = await response.json();
-    console.log("datos",entregables)
+    // console.log("datos",entregables)
     return entregables;
   } catch (error) {
     console.log("Error al hacer la peticion", error);

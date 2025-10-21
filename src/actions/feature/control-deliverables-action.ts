@@ -3,7 +3,7 @@
 const BASE_URL = process.env.SERVER_URL
 
 
-interface FormData  {
+interface FormData {
   token: string;
   attendee_id: number;
   // event_id: number;
@@ -22,7 +22,7 @@ export const GETControlDeliverables = async ({ token }: { token: string }) => {
     });
 
     const controlentregable = await response.json();
-     console.log("datos stands",controlentregable)
+    console.log("datos stands", controlentregable)
     return controlentregable;
   } catch (error) {
     console.log("Error al hacer la peticion", error);
@@ -31,7 +31,7 @@ export const GETControlDeliverables = async ({ token }: { token: string }) => {
 };
 
 
-export const GETControDeliverablesAll = async ({ token, search, page, pageSize,event }: { token: string; search?: string; page?: number; pageSize?: number; event?: number; }) => {
+export const GETControDeliverablesAll = async ({ token, search, page, pageSize, event }: { token: string; search?: string; page?: number; pageSize?: number; event?: number; }) => {
   const params = new URLSearchParams();
   if (search) params.append("search", search);
   if (page) params.append("page", page.toString());
@@ -66,10 +66,27 @@ export const POSTCrontolDeliverables = async ({ token, attendee_id, deliverable_
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ attendee_id, deliverable_id, attendee_email  }),
+    body: JSON.stringify({ attendee_id, deliverable_id, attendee_email }),
   });
 
-  const controlentregable = await response.json();
-  console.log("datos de stands",controlentregable)
-  return controlentregable;
+  if (!response.ok) {
+    const errorResponse = {
+      ok: false,
+      status: response.status,
+      statusText: response.statusText,
+      result: await response.text()
+    }
+    console.error("Error en POSTControl:", errorResponse);
+    return errorResponse;
+  }
+
+  const control = await response.json();
+  const successResponse = {
+    ok: true,
+    status: response.status,
+    statusText: response.statusText,
+    result: control
+  };
+  // console.log("Success en POSTControl:", successResponse);
+  return successResponse;
 };

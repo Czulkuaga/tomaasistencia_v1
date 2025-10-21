@@ -47,7 +47,7 @@ export const GETStandPublic = async (std: number) => {
     });
     // console.log(response)
     const stands = await response.json();
-    console.log("datos", stands)
+    // console.log("datos", stands)
     return stands;
   } catch (error) {
     console.log("Error al hacer la peticion", error);

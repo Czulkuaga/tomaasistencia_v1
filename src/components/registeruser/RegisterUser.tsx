@@ -163,10 +163,7 @@ export default function RegisterUser({ activity, stand, deliverable, atvId, stdI
                                 event_id: att.eventId,
                             } as any);
 
-                            // console.log("POSTCrontol", res);
-
                             setProcessingQr(false);
-                            // setScanMsg(null);
 
                             if (res.ok === false && res.status !== 400) {
                                 const msg =
@@ -211,24 +208,147 @@ export default function RegisterUser({ activity, stand, deliverable, atvId, stdI
 
 
                             setScanMsg("¡Registro guardado con éxito!");
-                        } else {
+                        } else if (stdId) {
+                            // console.log("Scope stand data ********************")
+                            setScanMsg("Procesando QR… ⏳");
+                            const res = await POSTCrontolStand({
+                                stand_id: Number(stdId),
+                                attendee_id: att.attendeeId,
+                                event_id: att.eventId,
+                            } as any);
+
+                            // console.log("res frontend", res)
+                            // console.log(stand)
+
                             setProcessingQr(false);
-                            // por si alguien abre esta pantalla sin atvId
-                            throw new Error("Falta el id de la actividad (atvId).");
+
+                            if (res.ok === false && res.status !== 400) {
+                                const msg =
+                                    `Error ${res.status}: ${res.statusText || "desconocido"
+                                    } - ${res.result || "No se pudo registrar."}`;
+                                throw new Error(msg);
+                            }
+
+                            if (res.ok === false && res.status === 400 && stand.survey_id) {
+                                setScanMsg(null);
+                                const surveyUrl = buildSurveyUrl({
+                                    surveyId: stand.survey_id,
+                                    ctx: "stand",
+                                    std: Number(stdId),
+                                    attendee: att.attendeeId,
+                                });
+                                setSurveyPrompt({
+                                    open: true,
+                                    message: "¡Ya estás registrado!",
+                                    surveyUrl,
+                                    attendeeName: "", // opcional, si tienes nombre del asistente
+                                });
+                                return;
+                            }
+                            // No hay encuesta asignada
+                            if (res.ok === false && res.status === 400 && !stand.survey_id) {
+                                setScanMsg(null);
+
+                                setSurveyPrompt({
+                                    open: true,
+                                    message: "¡Ya estás registrado!",
+                                    attendeeName: "", // opcional, si tienes nombre del asistente
+                                });
+                                return;
+                            }
+
+                            if (res.ok === true && res.status === 201 && stand?.stand_id) {
+                                setScanMsg(null);
+                                const surveyUrl = buildSurveyUrl({
+                                    surveyId: stand.survey_id,
+                                    ctx: "stand",
+                                    atv: Number(atvId),
+                                    attendee: att.attendeeId,
+                                });
+                                setSurveyPrompt({
+                                    open: true,
+                                    message: "¡Registro guardado con éxito!",
+                                    surveyUrl,
+                                    attendeeName: "", // opcional, si tienes nombre del asistente
+                                });
+                                return;
+                            }
+
+                            setScanMsg("¡Registro guardado con éxito!");
+                        } else if (delivId) {
+                            // console.log("Scope stand data ********************")
+                            setScanMsg("Procesando QR… ⏳");
+                            const res = await POSTCrontolDeliverables({
+                                deliverable_id: Number(delivId),
+                                attendee_id: att.attendeeId,
+                                event_id: att.eventId,
+                            } as any);
+
+                            // console.log("res frontend", res)
+                            // console.log(deliverable)
+
+                            setProcessingQr(false);
+
+                            if (res.ok === false && res.status !== 400) {
+                                const msg =
+                                    `Error ${res.status}: ${res.statusText || "desconocido"
+                                    } - ${res.result || "No se pudo registrar."}`;
+                                throw new Error(msg);
+                            }
+
+                            if (res.ok === false && res.status === 400 && deliverable.survey_id) {
+                                setScanMsg(null);
+                                const surveyUrl = buildSurveyUrl({
+                                    surveyId: deliverable.survey_id,
+                                    ctx: "deliverables",
+                                    deliv: Number(delivId),
+                                    attendee: att.attendeeId,
+                                });
+                                setSurveyPrompt({
+                                    open: true,
+                                    message: "¡Ya estás registrado!",
+                                    surveyUrl,
+                                    attendeeName: "", // opcional, si tienes nombre del asistente
+                                });
+                                return;
+                            }
+                            // No hay encuesta asignada
+                            if (res.ok === false && res.status === 400 && !deliverable.survey_id) {
+                                setScanMsg(null);
+
+                                setSurveyPrompt({
+                                    open: true,
+                                    message: "¡Ya estás registrado!",
+                                    attendeeName: "", // opcional, si tienes nombre del asistente
+                                });
+                                return;
+                            }
+
+                            if (res.ok === true && res.status === 201 && deliverable.survey_id) {
+                                setScanMsg(null);
+                                const surveyUrl = buildSurveyUrl({
+                                    surveyId: deliverable.survey_id,
+                                    ctx: "deliverables",
+                                    deliv: Number(delivId),
+                                    attendee: att.attendeeId,
+                                });
+                                setSurveyPrompt({
+                                    open: true,
+                                    message: "¡Registro guardado con éxito!",
+                                    surveyUrl,
+                                    attendeeName: "", // opcional, si tienes nombre del asistente
+                                });
+                                return;
+                            }
+
+                            setScanMsg("¡Registro guardado con éxito!");
                         }
 
-                        // UI éxito
-                        // Si tienes encuesta:
-                        // const surveyId = activity?.survey_id;
-                        // if (surveyId) {
-                        //   const surveyUrl = buildSurveyUrl({
-                        //     surveyId,
-                        //     ctx: "activity",
-                        //     atv: Number(atvId),
-                        //     attendee: att.attendeeId,
-                        //   });
-                        //   setSurveyPrompt({ open: true, message: "¡Registro guardado con éxito!", surveyUrl });
-                        // }
+                        else {
+                            setProcessingQr(false);
+                            // por si alguien abre esta pantalla sin atvId
+                            throw new Error("Falta el id para mostrar los datos.");
+                        }
 
                     } catch (e: any) {
                         const msg = String(e?.message || "No se pudo registrar.");
@@ -269,88 +389,166 @@ export default function RegisterUser({ activity, stand, deliverable, atvId, stdI
         setErrorManualForm({})
         setScanMsg(null)
 
-        const res = await POSTattendeeByEmail(email, Number(atvId))
-        // await registerAttendance({ email, attendeeId: data.attendee_id });
-        console.log(res)
-        if (res.ok === false && 'error' in res) {
-            setErrorManualForm({ formError: res.error });
-            return;
+        if (atvId) {
+            const res = await POSTattendeeByEmail(email, Number(atvId))
+            // await registerAttendance({ email, attendeeId: data.attendee_id });
+            console.log(res)
+            if (res.ok === false && 'error' in res) {
+                setErrorManualForm({ formError: res.error });
+                return;
+            }
+            if (res.ok === true && 'data' in res) {
+                setScanMsg("¡Registro guardado con éxito!")
+                const surveyUrl = buildSurveyUrl({
+                    surveyId: activity?.survey_id ?? 0,
+                    ctx: "activity",
+                    atv: Number(atvId),
+                    attendee: res.data.attendee_id,
+                });
+                setSurveyPrompt({
+                    open: true,
+                    message: "¡Registro guardado con éxito!",
+                    surveyUrl,
+                    attendeeName: "", // opcional, si tienes nombre del asistente
+                });
+                return;
+            }
         }
-        if (res.ok === true && 'data' in res) {
-            setScanMsg("¡Registro guardado con éxito!")
-            const surveyUrl = buildSurveyUrl({
-                surveyId: activity?.survey_id ?? 0,
-                ctx: "activity",
-                atv: Number(atvId),
-                attendee: res.data.attendee_id,
-            });
-            setSurveyPrompt({
-                open: true,
-                message: "¡Registro guardado con éxito!",
-                surveyUrl,
-                attendeeName: "", // opcional, si tienes nombre del asistente
-            });
-            return;
+
+        if (stdId) {
+            const res = await POSTCrontolStand({
+                stand_id: Number(stdId),
+                attendee_email: email
+            } as any);
+            // await registerAttendance({ email, attendeeId: data.attendee_id });
+            // console.log(res)
+            if (res.ok === false && res.status !== 400) {
+                setErrorManualForm({ formError: res.result });
+                return;
+            }
+
+            if (res.ok === false && res.status === 400 && res.result === '{"error":"Asistente (email) no encontrado para este evento."}') {
+                setErrorManualForm({ formError: res.result });
+                return;
+            }
+
+            if (res.ok === false && res.status === 400 && res.statusText === "Bad Request" && stand.survey_id) {
+                setScanMsg(null)
+                // const surveyUrl = buildSurveyUrl({
+                //     ctx: "stand",
+                //     attendee: res.result.attendee,
+                //     surveyId: stand?.survey_id ?? 0,
+                //     std: stdId,
+                // });
+
+                // console.log(surveyUrl)
+                setSurveyPrompt({
+                    open: true,
+                    message: "¡Ya estás registrado!",
+                    surveyUrl:"",
+                    attendeeName: "", // opcional, si tienes nombre del asistente
+                });
+                return;
+            }
+
+            if (res.ok === true && stand.survey_id) {
+                setScanMsg("¡Registro guardado con éxito!")
+                const surveyUrl = buildSurveyUrl({
+                    ctx: "stand",
+                    attendee: res.result.attendee,
+                    surveyId: stand?.survey_id ?? 0,
+                    std: stdId,
+                });
+
+                // console.log(surveyUrl)
+                setSurveyPrompt({
+                    open: true,
+                    message: "¡Registro guardado con éxito!",
+                    surveyUrl,
+                    attendeeName: "", // opcional, si tienes nombre del asistente
+                });
+                return;
+            }
+
+            if (res.ok === true && !stand.survey_id) {
+                setScanMsg("¡Registro guardado con éxito!")
+                setSurveyPrompt({
+                    open: true,
+                    message: "¡Registro guardado con éxito!",
+                    attendeeName: "", // opcional, si tienes nombre del asistente
+                });
+                return;
+            }
         }
 
+        if (delivId) {
+            const res = await POSTCrontolDeliverables({
+                deliverable_id: Number(delivId),
+                attendee_email: email
+            } as any);
+            // await registerAttendance({ email, attendeeId: data.attendee_id });
+            // console.log("Frontend manual deliveriables", res)
+            // console.log("deliveriables", deliverable)
 
-        // if (atvId) {
-        //     setScanMsg("Procesando QR… ⏳");
-        //     const res = await POSTCrontol({
-        //         activity_id: Number(atvId),
-        //         attendee_id: att.attendeeId,
-        //         event_id: att.eventId,
-        //     } as any);
+            if (res.ok === false && res.status !== 400) {
+                setErrorManualForm({ formError: res.result });
+                return;
+            }
 
-        //     // console.log("POSTCrontol", res);
+            if (res.ok === false && res.status === 400 && res.result === '{"error":"Asistente (email) no encontrado para este evento."}') {
+                setErrorManualForm({ formError: res.result });
+                return;
+            }
 
-        //     setProcessingQr(false);
-        //     // setScanMsg(null);
+            if (res.ok === false && res.status === 400 && res.statusText === "Bad Request" && deliverable.survey_id) {
+                setScanMsg(null)
+                // const surveyUrl = buildSurveyUrl({
+                //     ctx: "deliverables",
+                //     attendee: res.result.attendee,
+                //     surveyId: deliverable?.survey_id ?? 0,
+                //     deliv: delivId
+                // });
 
-        //     if (res.ok === false && res.status !== 400) {
-        //         const msg =
-        //             `Error ${res.status}: ${res.statusText || "desconocido"
-        //             } - ${res.result || "No se pudo registrar."}`;
-        //         throw new Error(msg);
-        //     }
+                // console.log(surveyUrl)
+                setSurveyPrompt({
+                    open: true,
+                    message: "¡Ya estás registrado!",
+                    surveyUrl: "",
+                    attendeeName: "", // opcional, si tienes nombre del asistente
+                });
+                return;
+            }
 
-        //     if (res.ok === false && res.status === 400 && activity?.survey_id) {
-        //         setScanMsg(null);
-        //         const surveyUrl = buildSurveyUrl({
-        //             surveyId: activity.survey_id,
-        //             ctx: "activity",
-        //             atv: Number(atvId),
-        //             attendee: att.attendeeId,
-        //         });
-        //         setSurveyPrompt({
-        //             open: true,
-        //             message: "¡Ya estás registrado!",
-        //             surveyUrl,
-        //             attendeeName: "", // opcional, si tienes nombre del asistente
-        //         });
-        //         return;
-        //     }
+            if (res.ok === true && deliverable.survey_id) {
+                setScanMsg("¡Registro guardado con éxito!")
+                const surveyUrl = buildSurveyUrl({
+                    ctx: "deliverables",
+                    attendee: res.result.attendee,
+                    surveyId: stand?.survey_id ?? 0,
+                    deliv: delivId
+                });
 
-        //     if (res.ok === true && res.status === 201 && activity?.survey_id) {
-        //         setScanMsg(null);
-        //         const surveyUrl = buildSurveyUrl({
-        //             surveyId: activity.survey_id,
-        //             ctx: "activity",
-        //             atv: Number(atvId),
-        //             attendee: att.attendeeId,
-        //         });
-        //         setSurveyPrompt({
-        //             open: true,
-        //             message: "¡Registro guardado con éxito!",
-        //             surveyUrl,
-        //             attendeeName: "", // opcional, si tienes nombre del asistente
-        //         });
-        //         return;
-        //     }
+                // console.log(surveyUrl)
+                setSurveyPrompt({
+                    open: true,
+                    message: "¡Registro guardado con éxito!",
+                    surveyUrl,
+                    attendeeName: "", // opcional, si tienes nombre del asistente
+                });
+                return;
+            }
 
+            if (res.ok === true && !deliverable.survey_id) {
+                setScanMsg("¡Registro guardado con éxito!")
+                setSurveyPrompt({
+                    open: true,
+                    message: "¡Registro guardado con éxito!",
+                    attendeeName: "", // opcional, si tienes nombre del asistente
+                });
+                return;
+            }
+        }
 
-        //     setScanMsg("¡Registro guardado con éxito!");
-        // }
     };
 
     // Limpieza al desmontar

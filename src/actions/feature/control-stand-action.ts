@@ -30,7 +30,7 @@ export const GETControlStand = async ({ token }: { token: string }) => {
   }
 };
 
-export const GETControStandlAll = async ({ token, search, page, page_size,event }: { token: string; search?: string; page?: number; page_size?: number; event?:number }) => {
+export const GETControStandlAll = async ({ token, search, page, page_size, event }: { token: string; search?: string; page?: number; page_size?: number; event?: number }) => {
   const params = new URLSearchParams();
   if (search) params.append("search", search);
   if (page) params.append("page", page.toString());
@@ -68,7 +68,24 @@ export const POSTCrontolStand = async ({ token, attendee_id, stand_id, attendee_
     body: JSON.stringify({ attendee_id, stand_id, attendee_email }),
   });
 
+  if (!response.ok) {
+    const errorResponse = {
+      ok: false,
+      status: response.status,
+      statusText: response.statusText,
+      result: await response.text()
+    }
+    console.error("Error en POSTControl:", errorResponse);
+    return errorResponse;
+  }
+
   const control = await response.json();
-  console.log("datos de stands", control)
-  return control;
+  const successResponse = {
+    ok: true,
+    status: response.status,
+    statusText: response.statusText,
+    result: control
+  };
+  // console.log("Success en POSTControl:", successResponse);
+  return successResponse;
 };
