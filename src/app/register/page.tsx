@@ -1,5 +1,5 @@
 import RegisterUser from "@/components/registeruser/RegisterUser";
-import { Suspense } from "react";
+// import { Suspense } from "react";
 
 import { GETActivityPublic } from "@/actions/feature/activity-action";
 import { GETStandPublic } from "@/actions/feature/stands-action";
@@ -27,8 +27,8 @@ export default async function Page({ searchParams }: PageProps) {
   const stand = std ? await GETStandPublic(std) : null;
   const deliverable = deliv ? await GETDeliverablesPublic(deliv) : null;
 
-  console.log({ atv, std, deliv });
-  console.log({ activity, stand, deliverable });
+  // console.log({ atv, std, deliv });
+  // console.log({ activity, stand, deliverable });
 
   return (
     <RegisterUser 
