@@ -388,31 +388,71 @@ export default function RegisterUser({ activity, stand, deliverable, atvId, stdI
         e.preventDefault();
         setErrorManualForm({})
         setScanMsg(null)
+        setSurveyPrompt(null)
 
         if (atvId) {
-            const res = await POSTattendeeByEmail(email, Number(atvId))
-            // await registerAttendance({ email, attendeeId: data.attendee_id });
-            console.log(res)
-            if (res.ok === false && 'error' in res) {
-                setErrorManualForm({ formError: res.error });
-                return;
+            // console.log(activity)
+            const obtainAttendeId = await POSTattendeeByEmail(email, Number(atvId))
+            // console.log(obtainAttendeId)
+            if (obtainAttendeId && "result" in obtainAttendeId) {
+                const res = await POSTCrontol({
+                    activity_id: Number(atvId),
+                    attendee_id: obtainAttendeId.result.attendee_id,
+                    event_id: obtainAttendeId.result.event_id,
+                } as any);
+                console.log(res)
+
+                if (res.ok === false && res.status === 400 && res.statusText === 'Bad Request' && activity?.survey_id) {
+                    setScanMsg("¡Ya estás registrado!")
+                    const surveyUrl = buildSurveyUrl({
+                        surveyId: activity?.survey_id ?? 0,
+                        ctx: "activity",
+                        atv: Number(atvId),
+                        attendee: obtainAttendeId.result.attendee_id,
+                    });
+                    setSurveyPrompt({
+                        open: true,
+                        message: "¡Ya estás registrado!",
+                        surveyUrl: surveyUrl,
+                        attendeeName: "", // opcional, si tienes nombre del asistente
+                    });
+                }
+
+                if (res.ok === false && res.status === 400 && res.statusText === 'Bad Request' && !activity?.survey_id) {
+                    setScanMsg("¡Ya estás registrado!")
+                    setSurveyPrompt({
+                        open: true,
+                        message: "¡Registro guardado con éxito!",
+                        surveyUrl: "",
+                        attendeeName: "", // opcional, si tienes nombre del asistente
+                    });
+                }
+
+                if (res.ok === true && 'result' in res) {
+                    setScanMsg("¡Registro guardado con éxito!")
+                    const surveyUrl = buildSurveyUrl({
+                        surveyId: activity?.survey_id ?? 0,
+                        ctx: "activity",
+                        atv: Number(atvId),
+                        attendee: obtainAttendeId.result.attendee_id,
+                    });
+                    setSurveyPrompt({
+                        open: true,
+                        message: "¡Registro guardado con éxito!",
+                        surveyUrl,
+                        attendeeName: "", // opcional, si tienes nombre del asistente
+                    });
+                    return;
+                }
             }
-            if (res.ok === true && 'data' in res) {
-                setScanMsg("¡Registro guardado con éxito!")
-                const surveyUrl = buildSurveyUrl({
-                    surveyId: activity?.survey_id ?? 0,
-                    ctx: "activity",
-                    atv: Number(atvId),
-                    attendee: res.data.attendee_id,
-                });
-                setSurveyPrompt({
-                    open: true,
-                    message: "¡Registro guardado con éxito!",
-                    surveyUrl,
-                    attendeeName: "", // opcional, si tienes nombre del asistente
-                });
-                return;
+
+            if (obtainAttendeId.ok === false && 'error' in obtainAttendeId) {
+                if (obtainAttendeId.error === 'HTTP 404: {"error":"Activity o email no existe o no está activo."}') {
+                    setErrorManualForm({ formError: "El correo no está registrado ó no está activo en el evento" });
+                    return;
+                }
             }
+
         }
 
         if (stdId) {
@@ -434,18 +474,12 @@ export default function RegisterUser({ activity, stand, deliverable, atvId, stdI
 
             if (res.ok === false && res.status === 400 && res.statusText === "Bad Request" && stand.survey_id) {
                 setScanMsg(null)
-                // const surveyUrl = buildSurveyUrl({
-                //     ctx: "stand",
-                //     attendee: res.result.attendee,
-                //     surveyId: stand?.survey_id ?? 0,
-                //     std: stdId,
-                // });
 
                 // console.log(surveyUrl)
                 setSurveyPrompt({
                     open: true,
                     message: "¡Ya estás registrado!",
-                    surveyUrl:"",
+                    surveyUrl: "",
                     attendeeName: "", // opcional, si tienes nombre del asistente
                 });
                 return;
@@ -502,12 +536,6 @@ export default function RegisterUser({ activity, stand, deliverable, atvId, stdI
 
             if (res.ok === false && res.status === 400 && res.statusText === "Bad Request" && deliverable.survey_id) {
                 setScanMsg(null)
-                // const surveyUrl = buildSurveyUrl({
-                //     ctx: "deliverables",
-                //     attendee: res.result.attendee,
-                //     surveyId: deliverable?.survey_id ?? 0,
-                //     deliv: delivId
-                // });
 
                 // console.log(surveyUrl)
                 setSurveyPrompt({
@@ -657,32 +685,6 @@ export default function RegisterUser({ activity, stand, deliverable, atvId, stdI
                             </div>
                         )}
 
-                        {scanMsg && (
-                            <div className="mb-4 rounded-lg bg-blue-50 p-4">
-                                <div className="flex">
-                                    <div className="flex-shrink-0">
-                                        <svg
-                                            className="h-5 w-5 text-blue-400"
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            viewBox="0 0 20 20"
-                                            fill="currentColor"
-                                            aria-hidden="true"
-                                        >
-                                            <path
-                                                fillRule="evenodd"
-                                                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                                            ></path>
-                                        </svg>
-                                    </div>
-                                    <div className="ml-3">
-                                        <h3 className="text-sm font-medium text-blue-800">Info</h3>
-                                        <div className="mt-2 text-sm text-blue-700">
-                                            <p>{scanMsg}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
                     </div>
 
                     <div>
@@ -715,7 +717,7 @@ export default function RegisterUser({ activity, stand, deliverable, atvId, stdI
                                             <button
                                                 type="button"
                                                 onClick={goToSurvey}
-                                                className="cursor-pointer inline-flex items-center justify-center rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition active:scale-[.98] hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
+                                                className="cursor-pointer inline-flex items-center justify-center rounded-xl bg-orange-400 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition active:scale-[.98] hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
                                             >
                                                 Ir a la encuesta
                                             </button>

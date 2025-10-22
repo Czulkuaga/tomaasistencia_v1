@@ -108,6 +108,11 @@ export const GETSurveyDetail = async (id_survey: number, token: string) => {
 //   }
 // }
 
+interface AttenddeResponse {
+  attendee_id: number,
+  event_id: number
+}
+
 //backup
 export async function POSTattendeeByEmail(email: string, activity_id: number) {
   try {
@@ -126,7 +131,13 @@ export async function POSTattendeeByEmail(email: string, activity_id: number) {
       throw new Error(`HTTP ${res.status}: ${text || res.statusText}`);
     }
 
-    return await res.json(); // <- devuelve el JSON del backend
+    const responseSuccess = {
+      ok: res.ok,
+      status: res.status,
+      result: await res.json() as AttenddeResponse
+    }
+
+    return responseSuccess// <- devuelve el JSON del backend
   } catch (err) {
     console.error("POSTattendeeByEmail error:", err);
     return { ok: false, error: err instanceof Error ? err.message : "Unknown error" };
