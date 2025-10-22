@@ -2,6 +2,10 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
+  productionBrowserSourceMaps: true,
+  experimental: {
+    serverSourceMaps: true,
+  },
   images: {
     remotePatterns: [
       {
