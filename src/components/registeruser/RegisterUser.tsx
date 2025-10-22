@@ -7,6 +7,7 @@ import { POSTCrontol } from "@/actions/feature/control-action";
 import { POSTCrontolStand } from "@/actions/feature/control-stand-action";
 import { POSTCrontolDeliverables } from "@/actions/feature/control-deliverables-action";
 import { POSTattendeeByEmail } from "@/actions/survey/survey-action";
+import { useRouter } from "next/navigation";
 
 interface Props {
     activity?: Actividad | null;
@@ -56,7 +57,7 @@ function parseAttFromText(text: string): { attendeeId: number; eventId?: number 
 }
 
 export default function RegisterUser({ activity, stand, deliverable, atvId, stdId, delivId }: Props) {
-
+    const router = useRouter()
     // Contexto desde props (se usa en UI y en registro)
     const ctx: Ctx =
         atvId ? "activity" : stdId ? "stand" : delivId ? "deliverables" : "activity";
@@ -398,7 +399,7 @@ export default function RegisterUser({ activity, stand, deliverable, atvId, stdI
                     attendee_id: obtainAttendeId.result.attendee_id,
                     event_id: obtainAttendeId.result.event_id,
                 } as any);
-                console.log(res)
+                // console.log(res)
 
                 if (res.ok === false && res.status === 400 && res.statusText === 'Bad Request' && activity?.survey_id) {
                     setScanMsg("¡Ya estás registrado!")
@@ -414,6 +415,7 @@ export default function RegisterUser({ activity, stand, deliverable, atvId, stdI
                         surveyUrl: surveyUrl,
                         attendeeName: "", // opcional, si tienes nombre del asistente
                     });
+                    return;
                 }
 
                 if (res.ok === false && res.status === 400 && res.statusText === 'Bad Request' && !activity?.survey_id) {
@@ -424,9 +426,10 @@ export default function RegisterUser({ activity, stand, deliverable, atvId, stdI
                         surveyUrl: "",
                         attendeeName: "", // opcional, si tienes nombre del asistente
                     });
+                    return;
                 }
 
-                if (res.ok === true && 'result' in res) {
+                if (res.ok === true && 'result' in res && activity?.survey_id) {
                     setScanMsg("¡Registro guardado con éxito!")
                     const surveyUrl = buildSurveyUrl({
                         surveyId: activity?.survey_id ?? 0,
@@ -438,6 +441,17 @@ export default function RegisterUser({ activity, stand, deliverable, atvId, stdI
                         open: true,
                         message: "¡Registro guardado con éxito!",
                         surveyUrl,
+                        attendeeName: "", // opcional, si tienes nombre del asistente
+                    });
+                    return;
+                }
+
+                if (res.ok === true && 'result' in res && !activity?.survey_id) {
+                    setScanMsg("¡Registro guardado con éxito!")
+                    setSurveyPrompt({
+                        open: true,
+                        message: "¡Registro guardado con éxito!",
+                        surveyUrl:"",
                         attendeeName: "", // opcional, si tienes nombre del asistente
                     });
                     return;
