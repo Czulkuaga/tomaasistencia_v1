@@ -378,11 +378,7 @@ export default function RegisterUser({ activity, stand, deliverable, atvId, stdI
         atvId,
         stdId,
         delivId,
-        stopScanner,
-        stand?.stand_id,
-        activity?.survey_id,
-        stand?.survey_id,
-        deliverable?.survey_id
+        stopScanner
     ]);
 
     // Submit manual
