@@ -31,6 +31,8 @@ export default async function pageAsistente({ searchParams }: PageProps) {
     const token = cookieStore.get("authToken")?.value ?? "";
 
     const data = await GETAsistenciAll({ token, search: search.trim(), page: page, page_size: page_size, event: eventId, });
+    const attendeesAll = await GETAsistenciAll({ token, search: search.trim(), page: page, page_size: 500, event: eventId, });
+
 
     return (
         <Asisten 
@@ -42,6 +44,7 @@ export default async function pageAsistente({ searchParams }: PageProps) {
             totalCount={data.count}
             initialEvent={eventId}
             token={token}
+            attendees={attendeesAll.results}
         />
     )
 }

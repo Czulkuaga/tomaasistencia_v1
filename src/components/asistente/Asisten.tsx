@@ -22,7 +22,8 @@ interface AsistenteProps {
   totalPages?: number
   totalCount?: number
   initialEvent?: number | undefined
-  token: string
+  token: string;
+  attendees:Asistencia[]
 }
 
 interface Asistencia {
@@ -45,8 +46,7 @@ interface Asistencia {
 
 const ASISTENCIA_OPTIONS = [{ value: "PRESENCIAL" }, { value: "VIRTUAL" }];
 
-export default function Asisten({ initialData, initialPage, initialPageSize, initialSearch, totalPages, totalCount, initialEvent, token }: AsistenteProps) {
-
+export default function Asisten({ initialData, initialPage, initialPageSize, initialSearch, totalPages, totalCount, initialEvent, token, attendees }: AsistenteProps) {
   const router = useRouter();
   const pathname = usePathname();
   const urlSearchParams = useSearchParams();
@@ -645,7 +645,7 @@ export default function Asisten({ initialData, initialPage, initialPageSize, ini
       {
         openModalSendBulkEmail && initialData && initialData.length > 0 && idevent && idevent.length > 0 && (
           <ModalSendBulkEmail
-            attendees={initialData}
+            attendees={attendees}
             event_id={initialEvent}
             setOpenModalSendBulkEmail={() => setOpenModalSendBulkEmail(false)}
             token={token}
