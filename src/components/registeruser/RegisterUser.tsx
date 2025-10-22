@@ -375,12 +375,14 @@ export default function RegisterUser({ activity, stand, deliverable, atvId, stdI
     }, [
         running,
         processingQr,
-        ctx,
         atvId,
         stdId,
         delivId,
-        activity?.survey_id,
         stopScanner,
+        stand?.stand_id,
+        activity?.survey_id,
+        stand?.survey_id,
+        deliverable?.survey_id
     ]);
 
     // Submit manual
@@ -422,7 +424,7 @@ export default function RegisterUser({ activity, stand, deliverable, atvId, stdI
                     setScanMsg("¡Ya estás registrado!")
                     setSurveyPrompt({
                         open: true,
-                        message: "¡Registro guardado con éxito!",
+                        message: "¡Ya estás registrado!",
                         surveyUrl: "",
                         attendeeName: "", // opcional, si tienes nombre del asistente
                     });
