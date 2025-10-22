@@ -393,7 +393,7 @@ export default function AnswerSurvey({ surveyId }: { surveyId: string }) {
 
             if (!res?.ok) {
                 console.error("[AnswerSurvey] Envío fallido:", res);
-                alert(res?.error || "No se pudieron enviar las respuestas.");
+                alert("La encuesta ya ha sido contestada");
                 setIsSubmitting(false);
                 return;
             }
