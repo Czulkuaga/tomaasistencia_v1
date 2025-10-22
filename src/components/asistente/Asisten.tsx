@@ -12,6 +12,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { EventSelector } from '../ui/EventSelector';
 import { RiMailSendLine } from "react-icons/ri";
 import { ModalSendQrByEmail } from './ModalSendQrByEmail';
+import { ModalSendBulkEmail } from './ModalSendBulkEmail';
 
 interface AsistenteProps {
   initialData?: Asistencia[]
@@ -61,6 +62,7 @@ export default function Asisten({ initialData, initialPage, initialPageSize, ini
   const [selectedAsistente, setSelectedAsistente] = useState<Asistencia | null>(null);
   const [qrValue, setQrValue] = useState<string>('');
   const [formErrors, setFormErrors] = useState<{ email?: string }>({});
+  const [openModalSendBulkEmail, setOpenModalSendBulkEmail] = useState(false)
 
   // para contar el numero de caracteres de la descripcion
   const PHONE_MAX = 10;  // ajusta si quieres
@@ -198,12 +200,21 @@ export default function Asisten({ initialData, initialPage, initialPageSize, ini
         </p>
 
         <div className='w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3'>
-          <button
-            className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-400 text-md font-bold"
-            onClick={() => setIsCreateProdu(true)}
-          >
-            + Crear Asistente
-          </button>
+          <div className='flex flex-col gap-4 md:flex-row'>
+            <button
+              className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-400 text-md font-bold"
+              onClick={() => setIsCreateProdu(true)}
+            >
+              + Crear Asistente
+            </button>
+            <button
+              className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-400 text-md font-bold"
+              onClick={() => setOpenModalSendBulkEmail(true)}
+            >
+              Enviar correo a los asistentes
+            </button>
+          </div>
+
 
           <div className="flex items-center flex-col md:flex-row gap-2 mb-4">
             <EventSelector
@@ -627,6 +638,17 @@ export default function Asisten({ initialData, initialPage, initialPageSize, ini
             token={token}
             qrValue={qrValue}
             attendee={selectedAsistente}
+          />
+        )
+      }
+
+      {
+        openModalSendBulkEmail && initialData && initialData.length > 0 && idevent && idevent.length > 0 && (
+          <ModalSendBulkEmail
+            attendees={initialData}
+            event_id={initialEvent}
+            setOpenModalSendBulkEmail={() => setOpenModalSendBulkEmail(false)}
+            token={token}
           />
         )
       }
