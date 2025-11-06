@@ -22,6 +22,7 @@ interface EntregablesProps {
   totalPages?: number
   totalCount?: number
   initialEvent?: number | undefined
+  main_user: boolean
 }
 
 interface Entregables {
@@ -51,7 +52,7 @@ interface Survey {
 
 const REGISTER_URL = process.env.NEXT_PUBLIC_REGISTER_URL ?? "";
 
-export default function Entregables({ initialData, initialPage, initialPageSize, initialSearch, totalPages, totalCount, initialEvent }: EntregablesProps) {
+export default function Entregables({ initialData, initialPage, initialPageSize, initialSearch, totalPages, totalCount, initialEvent, main_user }: EntregablesProps) {
 
   const router = useRouter();
   const pathname = usePathname();
@@ -228,12 +229,16 @@ export default function Entregables({ initialData, initialPage, initialPageSize,
         </p>
 
         <div className='w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3'>
-          <button
-            className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-400 text-md font-bold"
-            onClick={() => setIsCreateProdu(true)}
-          >
-            + Crear Entregable
-          </button>
+          {
+            main_user === true && (
+              <button
+                className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-400 text-md font-bold"
+                onClick={() => setIsCreateProdu(true)}
+              >
+                + Crear Entregable
+              </button>
+            )
+          }
 
           <div className="flex items-center flex-col md:flex-row gap-2 mb-4">
             <EventSelector
@@ -293,7 +298,11 @@ export default function Entregables({ initialData, initialPage, initialPageSize,
               <th className="border p-1 sm:p-2 text-center">HORA DE INICIO</th>
               <th className="border p-1 sm:p-2 text-center">HORA FIN</th>
               <th className="border p-1 sm:p-2 text-center">ACTIVO</th>
-              <th className="border p-1 sm:p-2 text-center">ACCIONES</th>
+              {
+                main_user === true && (
+                  <th className="border p-1 sm:p-2 text-center">ACCIONES</th>
+                )
+              }
             </tr>
           </thead>
           <tbody>
@@ -311,37 +320,41 @@ export default function Entregables({ initialData, initialPage, initialPageSize,
                   <td className="border border-gray-300 p-1 text-left max-w-[150px] truncate">{entrega.start_time}</td>
                   <td className="border border-gray-300 p-1 text-left max-w-[150px] truncate">{entrega.end_time}</td>
                   <td className="border border-gray-300 p-1 text-left max-w-[150px] truncate">{entrega.is_active ? "Sí" : "No"}</td>
-                  <td className="border border-gray-300 p-1 text-left max-w-[150px] truncate">
-                    <div className="flex justify-center items-center gap-2 sm:gap-4">
-                      <button onClick={() => handleQR(entrega)}>
-                        <IoQrCode size={20} className="text-gray-950 hover:text-gray-500 transition block" />
-                      </button>
+                  {
+                    main_user === true && (
+                      <td className="border border-gray-300 p-1 text-left max-w-[150px] truncate">
+                        <div className="flex justify-center items-center gap-2 sm:gap-4">
+                          <button onClick={() => handleQR(entrega)}>
+                            <IoQrCode size={20} className="text-gray-950 hover:text-gray-500 transition block" />
+                          </button>
 
-                      <button
-                        onClick={() => {
-                          setSelecteDeliverable(entrega);
-                          setEditModal(true);
-                        }}
-                      >
-                        <FaUserEdit size={20} className="text-violet-400 hover:text-violet-500 transition block" />
-                      </button>
-                      <button onClick={() => handledelete(entrega.id_deliverable!)}>
-                        <MdDelete size={20} className="text-gray-400 hover:text-red-800 transition block" />
-                      </button>
-                      <button
-                        onClick={() => {
-                          setSelecteDeliverable(entrega);
-                          setVista(true);
-                        }}
-                        title="Ver información"
-                        className="hover:opacity-80"
-                      >
-                        <IoEye size={20} className="text-blue-500" />
-                      </button>
+                          <button
+                            onClick={() => {
+                              setSelecteDeliverable(entrega);
+                              setEditModal(true);
+                            }}
+                          >
+                            <FaUserEdit size={20} className="text-violet-400 hover:text-violet-500 transition block" />
+                          </button>
+                          <button onClick={() => handledelete(entrega.id_deliverable!)}>
+                            <MdDelete size={20} className="text-gray-400 hover:text-red-800 transition block" />
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelecteDeliverable(entrega);
+                              setVista(true);
+                            }}
+                            title="Ver información"
+                            className="hover:opacity-80"
+                          >
+                            <IoEye size={20} className="text-blue-500" />
+                          </button>
 
 
-                    </div>
-                  </td>
+                        </div>
+                      </td>
+                    )
+                  }
                 </tr>
               ))
             ) : (

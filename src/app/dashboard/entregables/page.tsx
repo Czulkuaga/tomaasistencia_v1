@@ -2,6 +2,7 @@ import Entregables from '@/components/entregables/Entregables'
 import { cookies } from 'next/headers';
 
 import { GETDeliverablesAll } from "@/actions/feature/deliverables-action"
+import { decryptToken } from '@/actions/jwt/jwt-action';
 
 type PageProps = {
     searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -31,6 +32,11 @@ export default async function PageEvent({ searchParams }: PageProps) {
     const eventId = eventFromUrl ?? eventFromCookie; // URL manda
     const token = cookieStore.get("authToken")?.value ?? "";
 
+      const tokedata = await decryptToken(token)
+      const toBool = (v: unknown) => v === true;
+      const is_staff = toBool(typeof tokedata !== "string" && (tokedata as any).is_staff);
+      const main_user = toBool(typeof tokedata !== "string" && (tokedata as any).main_user);
+
     const data = await GETDeliverablesAll({ token, search: search.trim(), page: page, page_size: page_size, event: eventId, });
 
     return (
@@ -42,6 +48,7 @@ export default async function PageEvent({ searchParams }: PageProps) {
             totalPages={data.total_pages}
             totalCount={data.count}
             initialEvent={eventId}
+            main_user={main_user}
         />
     )
 }

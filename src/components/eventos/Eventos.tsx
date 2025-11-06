@@ -22,11 +22,13 @@ interface Props {
   totalPages?: number
   totalCount?: number
   token: string
+  is_staff: boolean
+  main_user: boolean
 }
 
 const REGISTER_URL = process.env.NEXT_PUBLIC_REGISTER_URL ?? "";
 
-export default function EventosClient({ initialData, initialPage, initialPageSize, totalPages, totalCount, token }: Props) {
+export default function EventosClient({ initialData, initialPage, initialPageSize, totalPages, totalCount, token, is_staff, main_user }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const urlSearchParams = useSearchParams();
@@ -99,10 +101,10 @@ export default function EventosClient({ initialData, initialPage, initialPageSiz
   const isFirst = initialPage ? initialPage <= 1 : true;
   const isLast = initialPage && totalPages ? initialPage >= totalPages : true;
 
-  const handlerUpdateImage = async (eventSelected:Event, urlImage: string) => {
+  const handlerUpdateImage = async (eventSelected: Event, urlImage: string) => {
 
-    const eventId=eventSelected?.id_event ?? 0
-    const eventDataToUpdate = {...eventSelected,event_image:urlImage}
+    const eventId = eventSelected?.id_event ?? 0
+    const eventDataToUpdate = { ...eventSelected, event_image: urlImage }
 
     try {
       const res = await PATCHEvent(eventId, token, eventDataToUpdate);
@@ -113,12 +115,17 @@ export default function EventosClient({ initialData, initialPage, initialPageSiz
 
   return (
     <section className="space-y-6 overflow-auto w-full">
-      <button
-        className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-400 text-md font-bold mb-4"
-        onClick={() => setIsCreateOpen(true)}
-      >
-        + Crear Evento
-      </button>
+      {
+        main_user === true && (
+          <button
+            className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-400 text-md font-bold mb-4"
+            onClick={() => setIsCreateOpen(true)}
+          >
+            + Crear Evento
+          </button>
+        )
+      }
+
 
       <div className="w-full overflow-x-auto rounded-lg shadow">
         <table className="w-full min-w-[1100px] border border-gray-200 rounded-lg text-xs sm:text-sm shadow-sm">
@@ -132,7 +139,11 @@ export default function EventosClient({ initialData, initialPage, initialPageSiz
               <th className="border p-1 text-center sm:p-2 w-18">HORA FIN</th>
               <th className="border p-1 text-center sm:p-2 w-18">ACTIVO</th>
               <th className="border p-1 text-center sm:p-2 w-18">PÚBLICO</th>
-              <th className="border p-1 text-center sm:p-2 w-18">ACCIONES</th>
+              {
+                main_user === true && (
+                  <th className="border p-1 text-center sm:p-2 w-18">ACCIONES</th>
+                )
+              }
             </tr>
           </thead>
 
@@ -148,37 +159,41 @@ export default function EventosClient({ initialData, initialPage, initialPageSiz
                   <td className="border border-gray-300 p-1 text-left max-w-[150px] truncate">{eve.end_time}</td>
                   <td className="border border-gray-300 p-1 text-left max-w-[150px] truncate">{eve.is_active ? "Sí" : "No"}</td>
                   <td className="border border-gray-300 p-1 text-left max-w-[150px] truncate">{eve.is_public_event ? "Sí" : "No"}</td>
-                  <td className="border border-gray-300 p-1 text-left max-w-[190px] truncate">
-                    <div className="flex justify-center items-center gap-2 sm:gap-4">
+                  {
+                    main_user === true && (
+                      <td className="border border-gray-300 p-1 text-left max-w-[190px] truncate">
+                        <div className="flex justify-center items-center gap-2 sm:gap-4">
 
-                      <button onClick={() => openModalToQr(eve)}>
-                        <IoQrCode size={20} className="text-purple-950 hover:text-violet-500 transition block" />
-                      </button>
+                          <button onClick={() => openModalToQr(eve)}>
+                            <IoQrCode size={20} className="text-purple-950 hover:text-violet-500 transition block" />
+                          </button>
 
-                      <button onClick={() => openModalChangeEventImage(eve)}>
-                        <RiImageAddFill size={20} />
-                      </button>
+                          <button onClick={() => openModalChangeEventImage(eve)}>
+                            <RiImageAddFill size={20} />
+                          </button>
 
-                      <button
-                        onClick={() => { setSelectedEvent(eve); setVista(true); }}
-                        title="Ver información"
-                        className="hover:opacity-80"
-                      >
-                        <IoEye size={20} className="text-purple-400 hover:text-violet-500 transition" />
-                      </button>
+                          <button
+                            onClick={() => { setSelectedEvent(eve); setVista(true); }}
+                            title="Ver información"
+                            className="hover:opacity-80"
+                          >
+                            <IoEye size={20} className="text-purple-400 hover:text-violet-500 transition" />
+                          </button>
 
-                      <button
-                        onClick={() => { setSelectedEvent(eve); setEditModal(true); }}
-                        title="Editar"
-                      >
-                        <FaUserEdit size={20} className="text-purple-400 hover:text-purple-500 transition" />
-                      </button>
+                          <button
+                            onClick={() => { setSelectedEvent(eve); setEditModal(true); }}
+                            title="Editar"
+                          >
+                            <FaUserEdit size={20} className="text-purple-400 hover:text-purple-500 transition" />
+                          </button>
 
-                      <button onClick={() => eve.id_event && handleDelete(eve.id_event)} title="Eliminar">
-                        <MdDelete size={20} className="text-gray-400 hover:text-red-800 transition" />
-                      </button>
-                    </div>
-                  </td>
+                          <button onClick={() => eve.id_event && handleDelete(eve.id_event)} title="Eliminar">
+                            <MdDelete size={20} className="text-gray-400 hover:text-red-800 transition" />
+                          </button>
+                        </div>
+                      </td>
+                    )
+                  }
                 </tr>
               ))
             ) : (
@@ -259,7 +274,7 @@ export default function EventosClient({ initialData, initialPage, initialPageSiz
           <ChangeEventImage
             selectedEvent={selectedEvent}
             setOpenModalEventImage={setOpenModalEventImage}
-            onSaved={(selectedEvent, url) => handlerUpdateImage(selectedEvent, url)} 
+            onSaved={(selectedEvent, url) => handlerUpdateImage(selectedEvent, url)}
           />
         )
       }

@@ -1,6 +1,7 @@
 import Activity from "@/components/actividad/Activity"
 import { cookies } from 'next/headers';
 import { GETActivityAll } from "@/actions/feature/activity-action"
+import { decryptToken } from "@/actions/jwt/jwt-action";
 
 type PageProps = {
     searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -30,6 +31,11 @@ export default async function pageAsistente({ searchParams }: PageProps) {
     const eventId = eventFromUrl ?? eventFromCookie; // URL manda
     const token = cookieStore.get("authToken")?.value ?? "";
 
+    const tokedata = await decryptToken(token)
+    const toBool = (v: unknown) => v === true;
+    const is_staff = toBool(typeof tokedata !== "string" && (tokedata as any).is_staff);
+    const main_user = toBool(typeof tokedata !== "string" && (tokedata as any).main_user);
+
     const data = await GETActivityAll({ token, search: search.trim(), page: page, page_size: page_size, event: eventId });
 
     return (
@@ -41,6 +47,7 @@ export default async function pageAsistente({ searchParams }: PageProps) {
             totalPages={data.total_pages}
             totalCount={data.count}
             initialEvent={eventId}
+            main_user={main_user}
         />
     )
 }

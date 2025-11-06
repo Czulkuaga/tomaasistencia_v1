@@ -22,6 +22,7 @@ interface ControlAsistenteProps {
     totalPages?: number
     totalCount?: number
     initialEvent?: number | undefined
+    main_user: boolean
 }
 
 interface Stands {
@@ -45,7 +46,7 @@ interface Survey {
 
 const REGISTER_URL = process.env.NEXT_PUBLIC_REGISTER_URL ?? "";
 
-export default function Stands({ initialData, initialPage, initialPageSize, initialSearch, totalPages, totalCount, initialEvent }: ControlAsistenteProps) {
+export default function Stands({ initialData, initialPage, initialPageSize, initialSearch, totalPages, totalCount, initialEvent, main_user }: ControlAsistenteProps) {
 
     const router = useRouter();
     const pathname = usePathname();
@@ -202,12 +203,16 @@ export default function Stands({ initialData, initialPage, initialPageSize, init
                 </p>
 
                 <div className='w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3'>
-                    <button
-                        className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-400 text-md font-bold"
-                        onClick={() => setIsCreateProdu(true)}
-                    >
-                        + Crear Stands
-                    </button>
+                    {
+                        main_user === true && (
+                            <button
+                                className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-400 text-md font-bold"
+                                onClick={() => setIsCreateProdu(true)}
+                            >
+                                + Crear Stands
+                            </button>
+                        )
+                    }
 
                     <div className="flex items-center flex-col md:flex-row gap-2 mb-4">
                         <EventSelector
@@ -263,7 +268,11 @@ export default function Stands({ initialData, initialPage, initialPageSize, init
                             {/* <th className="border p-2 ">Descripcion</th> */}
                             <th className="border p-2 ">Lugar</th>
                             <th className="border p-2 ">ACTIVO</th>
-                            <th className="border p-2 text-center">Acciones</th>
+                            {
+                                main_user === true && (
+                                    <th className="border p-2 text-center">Acciones</th>
+                                )
+                            }
                         </tr>
                     </thead>
                     <tbody className="">
@@ -276,40 +285,44 @@ export default function Stands({ initialData, initialPage, initialPageSize, init
                                     {/* <td className="border border-gray-400 p-2 text-center">{stad.description}</td> */}
                                     <td className="border border-gray-300 p-1 text-left max-w-[150px] truncate">{stad.location}</td>
                                     <td className="border border-gray-300 p-1 text-left max-w-[150px] truncate">{stad.is_active ? "Sí" : "No"}</td>
-                                    <td className="border border-gray-300 p-1 text-center max-w-[150px] truncate">
+                                    {
+                                        main_user === true && (
+                                            <td className="border border-gray-300 p-1 text-center max-w-[150px] truncate">
 
-                                        <div className="flex justify-center items-center gap-2 sm:gap-4">
+                                                <div className="flex justify-center items-center gap-2 sm:gap-4">
 
-                                            <button onClick={() => handleQR(stad)}>
-                                                <IoQrCode size={20} className="text-purple-950 hover:text-violet-500 transition block" />
-                                            </button>
+                                                    <button onClick={() => handleQR(stad)}>
+                                                        <IoQrCode size={20} className="text-purple-950 hover:text-violet-500 transition block" />
+                                                    </button>
 
-                                            <button
-                                                onClick={() => {
-                                                    setSelectedStands(stad);   // 👈 importante
-                                                    setVista(true);          // 👈 abre el modal
-                                                }}
-                                                title="Ver información"
-                                                className="hover:opacity-80"
-                                            >
-                                                <IoEye size={20} className="text-purple-400 hover:text-violet-400" />
-                                            </button>
+                                                    <button
+                                                        onClick={() => {
+                                                            setSelectedStands(stad);   // 👈 importante
+                                                            setVista(true);          // 👈 abre el modal
+                                                        }}
+                                                        title="Ver información"
+                                                        className="hover:opacity-80"
+                                                    >
+                                                        <IoEye size={20} className="text-purple-400 hover:text-violet-400" />
+                                                    </button>
 
 
-                                            <button
-                                                onClick={() => {
-                                                    setSelectedStands(stad);
-                                                    setEditModal(true);
-                                                }}
-                                            >
-                                                <FaUserEdit size={20} className="text-purple-400 hover:text-violet-400 transition" />
-                                            </button>
+                                                    <button
+                                                        onClick={() => {
+                                                            setSelectedStands(stad);
+                                                            setEditModal(true);
+                                                        }}
+                                                    >
+                                                        <FaUserEdit size={20} className="text-purple-400 hover:text-violet-400 transition" />
+                                                    </button>
 
-                                            <button onClick={() => handledelete(stad.id_stand!)}>
-                                                <MdDelete size={20} className="text-gray-400 hover:text-red-800 transition block" />
-                                            </button>
-                                        </div>
-                                    </td>
+                                                    <button onClick={() => handledelete(stad.id_stand!)}>
+                                                        <MdDelete size={20} className="text-gray-400 hover:text-red-800 transition block" />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        )
+                                    }
                                 </tr>
                             ))
                         ) : (
