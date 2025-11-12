@@ -23,7 +23,9 @@ interface AsistenteProps {
   totalCount?: number
   initialEvent?: number | undefined
   token: string;
-  attendees:Asistencia[]
+  attendees: Asistencia[]
+  is_staff: boolean
+  main_user: boolean
 }
 
 interface Asistencia {
@@ -46,7 +48,7 @@ interface Asistencia {
 
 const ASISTENCIA_OPTIONS = [{ value: "PRESENCIAL" }, { value: "VIRTUAL" }];
 
-export default function Asisten({ initialData, initialPage, initialPageSize, initialSearch, totalPages, totalCount, initialEvent, token, attendees }: AsistenteProps) {
+export default function Asisten({ initialData, initialPage, initialPageSize, initialSearch, totalPages, totalCount, initialEvent, token, attendees, is_staff, main_user }: AsistenteProps) {
   const router = useRouter();
   const pathname = usePathname();
   const urlSearchParams = useSearchParams();
@@ -200,21 +202,56 @@ export default function Asisten({ initialData, initialPage, initialPageSize, ini
         </p>
 
         <div className='w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3'>
-          <div className='flex flex-col gap-4 md:flex-row'>
-            <button
-              className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-400 text-md font-bold"
-              onClick={() => setIsCreateProdu(true)}
-            >
-              + Crear Asistente
-            </button>
-            <button
-              className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-400 text-md font-bold"
-              onClick={() => setOpenModalSendBulkEmail(true)}
-            >
-              Enviar correo a los asistentes
-            </button>
-          </div>
+          {
+            main_user === true && is_staff === false && (
+              <div className='flex flex-col gap-4 md:flex-row'>
+                <button
+                  className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-400 text-md font-bold"
+                  onClick={() => setIsCreateProdu(true)}
+                >
+                  + Crear Asistente
+                </button>
+                <button
+                  className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-400 text-md font-bold"
+                  onClick={() => setOpenModalSendBulkEmail(true)}
+                >
+                  Enviar correo a los asistentes
+                </button>
+              </div>
+            )
+          }
 
+          {
+            main_user === false && is_staff === true && (
+              <div className='flex flex-col gap-4 md:flex-row'>
+                <button
+                  className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-400 text-md font-bold"
+                  onClick={() => setIsCreateProdu(true)}
+                >
+                  + Crear Asistente
+                </button>
+                <button
+                  className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-400 text-md font-bold"
+                  onClick={() => setOpenModalSendBulkEmail(true)}
+                >
+                  Enviar correo a los asistentes
+                </button>
+              </div>
+            )
+          }
+
+          {
+            main_user === false && is_staff === false && (
+              <div className='flex flex-col gap-4 md:flex-row'>
+                <button
+                  className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-400 text-md font-bold"
+                  onClick={() => setIsCreateProdu(true)}
+                >
+                  + Crear Asistente
+                </button>
+              </div>
+            )
+          }
 
           <div className="flex items-center flex-col md:flex-row gap-2 mb-4">
             <EventSelector
@@ -287,29 +324,85 @@ export default function Asisten({ initialData, initialPage, initialPageSize, ini
                   {/* <td className="border p-2 whitespace-nowrap">{asis.qr_code}</td> */}
                   <td className="border border-gray-300 p-1 text-left max-w-[150px] truncate">{asis.is_active ? "Sí" : "No"}</td>
                   <td className="border border-gray-300 p-1 text-center max-w-[150px] truncate">
-                    <div className="flex justify-center items-center gap-2 sm:gap-4">
+                    {
+                      main_user === true && is_staff === false && (
+                        <div className="flex justify-center items-center gap-2 sm:gap-4">
 
-                      <button onClick={() => openSendQrByEmail(asis)}>
-                        <RiMailSendLine size={20} className='text-violet-400 hover:text-violet-500 transition' />
-                      </button>
+                          <button onClick={() => openSendQrByEmail(asis)}>
+                            <RiMailSendLine size={20} className='text-violet-400 hover:text-violet-500 transition' />
+                          </button>
 
-                      <button onClick={() => handleQR(asis)}>
-                        <IoQrCode size={20} className="text-gray-950 hover:text-gray-500 transition block" />
-                      </button>
+                          <button onClick={() => handleQR(asis)}>
+                            <IoQrCode size={20} className="text-gray-950 hover:text-gray-500 transition block" />
+                          </button>
 
-                      <button
-                        onClick={() => {
-                          setSelectedAsistente(asis);
-                          setEditModal(true);
-                        }}
-                      >
-                        <FaUserEdit size={20} className="text-violet-400 hover:text-violet-500 transition" />
-                      </button>
+                          <button
+                            onClick={() => {
+                              setSelectedAsistente(asis);
+                              setEditModal(true);
+                            }}
+                          >
+                            <FaUserEdit size={20} className="text-violet-400 hover:text-violet-500 transition" />
+                          </button>
 
-                      <button onClick={() => handledelete(asis.id_asistente!)}>
-                        <MdDelete size={20} className="text-gray-400 hover:text-red-800 transition" />
-                      </button>
-                    </div>
+                          <button onClick={() => handledelete(asis.id_asistente!)}>
+                            <MdDelete size={20} className="text-gray-400 hover:text-red-800 transition" />
+                          </button>
+                        </div>
+                      )
+                    }
+
+                    {
+                      main_user === false && is_staff === true && (
+                        <div className="flex justify-center items-center gap-2 sm:gap-4">
+
+                          <button onClick={() => openSendQrByEmail(asis)}>
+                            <RiMailSendLine size={20} className='text-violet-400 hover:text-violet-500 transition' />
+                          </button>
+
+                          <button onClick={() => handleQR(asis)}>
+                            <IoQrCode size={20} className="text-gray-950 hover:text-gray-500 transition block" />
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              setSelectedAsistente(asis);
+                              setEditModal(true);
+                            }}
+                          >
+                            <FaUserEdit size={20} className="text-violet-400 hover:text-violet-500 transition" />
+                          </button>
+
+                          <button onClick={() => handledelete(asis.id_asistente!)}>
+                            <MdDelete size={20} className="text-gray-400 hover:text-red-800 transition" />
+                          </button>
+                        </div>
+                      )
+                    }
+
+                    {
+                      main_user === false && is_staff === false && (
+                        <div className="flex justify-center items-center gap-2 sm:gap-4">
+                          <button onClick={() => openSendQrByEmail(asis)}>
+                            <RiMailSendLine size={20} className='text-violet-400 hover:text-violet-500 transition' />
+                          </button>
+
+                          <button onClick={() => handleQR(asis)}>
+                            <IoQrCode size={20} className="text-gray-950 hover:text-gray-500 transition block" />
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              setSelectedAsistente(asis);
+                              setEditModal(true);
+                            }}
+                          >
+                            <FaUserEdit size={20} className="text-violet-400 hover:text-violet-500 transition" />
+                          </button>
+                        </div>
+                      )
+                    }
+
                   </td>
                 </tr>
               ))

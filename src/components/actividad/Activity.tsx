@@ -23,6 +23,7 @@ interface ControlAsistenteProps {
   totalPages?: number
   totalCount?: number
   initialEvent?: number | undefined
+  is_staff: boolean
   main_user: boolean
 }
 
@@ -54,7 +55,7 @@ interface Survey {
 
 const REGISTER_URL = process.env.NEXT_PUBLIC_REGISTER_URL ?? "";
 
-export default function Activity({ initialData, initialPage, initialPageSize, initialSearch, totalPages, totalCount, initialEvent, main_user }: ControlAsistenteProps) {
+export default function Activity({ initialData, initialPage, initialPageSize, initialSearch, totalPages, totalCount, initialEvent, is_staff, main_user }: ControlAsistenteProps) {
 
   const router = useRouter();
   const pathname = usePathname();
@@ -134,7 +135,6 @@ export default function Activity({ initialData, initialPage, initialPageSize, in
   const isFirst = initialPage ? initialPage <= 1 : true;
   const isLast = initialPage && totalPages ? initialPage >= totalPages : true;
 
-
   // Obtener lista de eventos
   const GetEventosList = async () => {
     try {
@@ -202,7 +202,18 @@ export default function Activity({ initialData, initialPage, initialPageSize, in
 
         <div className='w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3'>
           {
-            main_user === true && (
+            main_user === true && is_staff === false && (
+              <button
+                className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-400 text-md font-bold"
+                onClick={() => setIsCreateProdu(true)}
+              >
+                + Crear Actividad
+              </button>
+            )
+          }
+
+          {
+            main_user === false && is_staff === true && (
               <button
                 className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-400 text-md font-bold"
                 onClick={() => setIsCreateProdu(true)}
@@ -268,11 +279,7 @@ export default function Activity({ initialData, initialPage, initialPageSize, in
                 <th className="border p-1 sm:p-2 text-center">HORA DE INICIO</th>
                 <th className="border p-1 sm:p-2 text-center">HORA FIN</th>
                 <th className="border p-1 sm:p-2 text-center">ACTIVO</th>
-                {
-                  main_user === true && (
-                    <th className="border p-1 sm:p-2 text-center">ACCIONES</th>
-                  )
-                }
+                <th className="border p-1 sm:p-2 text-center">ACCIONES</th>
               </tr>
             </thead>
             <tbody>
@@ -291,7 +298,7 @@ export default function Activity({ initialData, initialPage, initialPageSize, in
                     <td className="border border-gray-300 p-1 text-left max-w-[150px] truncate">{acti.end_time}</td>
                     <td className="border border-gray-300 p-1 text-left max-w-[150px] truncate">{acti.is_active ? "Sí" : "No"}</td>
                     {
-                      main_user === true && (
+                      main_user === true && is_staff === false && (
                         <td className="border border-gray-300 p-1 text-center max-w-[150px] truncate">
 
                           <div className="flex justify-center items-center gap-2 sm:gap-4">
@@ -324,6 +331,69 @@ export default function Activity({ initialData, initialPage, initialPageSize, in
 
                             <button onClick={() => handledelete(acti.id_actividad!)}>
                               <MdDelete size={20} className="text-gray-400 hover:text-red-800 transition block" />
+                            </button>
+                          </div>
+                        </td>
+                      )
+                    }
+                    {
+                      main_user === false && is_staff === true && (
+                        <td className="border border-gray-300 p-1 text-center max-w-[150px] truncate">
+
+                          <div className="flex justify-center items-center gap-2 sm:gap-4">
+
+                            <button onClick={() => handleQR(acti)}>
+                              <IoQrCode size={20} className="text-purple-950 hover:text-violet-500 transition block" />
+                            </button>
+
+                            <button
+                              onClick={() => {
+                                setSelectedActivity(acti);
+                                setVista(true);
+                              }}
+                              title="Ver información"
+                              className="hover:opacity-80"
+                            >
+                              <IoEye size={20} className="text-purple-400 hover:text-violet-500 transition block" />
+                            </button>
+
+
+                            <button
+                              onClick={() => {
+                                setSelectedActivity(acti);
+                                setEditModal(true);
+                              }}
+                            >
+                              <FaUserEdit size={20} className="text-purple-400 hover:text-violet-500 transition block" />
+                            </button>
+
+
+                            <button onClick={() => handledelete(acti.id_actividad!)}>
+                              <MdDelete size={20} className="text-gray-400 hover:text-red-800 transition block" />
+                            </button>
+                          </div>
+                        </td>
+                      )
+                    }
+                    {
+                      main_user === false && is_staff === false && (
+                        <td className="border border-gray-300 p-1 text-center max-w-[150px] truncate">
+
+                          <div className="flex justify-center items-center gap-2 sm:gap-4">
+
+                            <button onClick={() => handleQR(acti)}>
+                              <IoQrCode size={20} className="text-purple-950 hover:text-violet-500 transition block" />
+                            </button>
+
+                            <button
+                              onClick={() => {
+                                setSelectedActivity(acti);
+                                setVista(true);
+                              }}
+                              title="Ver información"
+                              className="hover:opacity-80"
+                            >
+                              <IoEye size={20} className="text-purple-400 hover:text-violet-500 transition block" />
                             </button>
                           </div>
                         </td>

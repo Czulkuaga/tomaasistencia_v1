@@ -1,6 +1,7 @@
 import Asisten from "@/components/asistente/Asisten"
 import { cookies } from 'next/headers';
 import { GETAsistenciAll } from "@/actions/feature/asistencia-action"
+import { decryptToken } from "@/actions/jwt/jwt-action";
 
 type PageProps = {
     searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -30,12 +31,17 @@ export default async function pageAsistente({ searchParams }: PageProps) {
     const eventId = eventFromUrl ?? eventFromCookie; // URL manda
     const token = cookieStore.get("authToken")?.value ?? "";
 
+    const tokedata = await decryptToken(token)
+    const toBool = (v: unknown) => v === true;
+    const is_staff = toBool(typeof tokedata !== "string" && (tokedata as any).is_staff);
+    const main_user = toBool(typeof tokedata !== "string" && (tokedata as any).main_user);
+
     const data = await GETAsistenciAll({ token, search: search.trim(), page: page, page_size: page_size, event: eventId, });
     const attendeesAll = await GETAsistenciAll({ token, search: search.trim(), page: page, page_size: 500, event: eventId, });
 
 
     return (
-        <Asisten 
+        <Asisten
             initialData={data.results}
             initialPage={page}
             initialPageSize={page_size}
@@ -45,6 +51,8 @@ export default async function pageAsistente({ searchParams }: PageProps) {
             initialEvent={eventId}
             token={token}
             attendees={attendeesAll.results}
+            is_staff={is_staff}
+            main_user={main_user}
         />
     )
 }

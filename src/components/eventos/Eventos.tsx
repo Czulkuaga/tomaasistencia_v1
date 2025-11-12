@@ -139,11 +139,7 @@ export default function EventosClient({ initialData, initialPage, initialPageSiz
               <th className="border p-1 text-center sm:p-2 w-18">HORA FIN</th>
               <th className="border p-1 text-center sm:p-2 w-18">ACTIVO</th>
               <th className="border p-1 text-center sm:p-2 w-18">PÚBLICO</th>
-              {
-                main_user === true && (
-                  <th className="border p-1 text-center sm:p-2 w-18">ACCIONES</th>
-                )
-              }
+              <th className="border p-1 text-center sm:p-2 w-18">ACCIONES</th>
             </tr>
           </thead>
 
@@ -194,6 +190,54 @@ export default function EventosClient({ initialData, initialPage, initialPageSiz
                       </td>
                     )
                   }
+                  {
+                    main_user === false && is_staff === true && (
+                      <td className="border border-gray-300 p-1 text-left max-w-[190px] truncate">
+                        <div className="flex justify-center items-center gap-2 sm:gap-4">
+
+                          <button onClick={() => openModalToQr(eve)}>
+                            <IoQrCode size={20} className="text-purple-950 hover:text-violet-500 transition block" />
+                          </button>
+
+                          <button onClick={() => openModalChangeEventImage(eve)}>
+                            <RiImageAddFill size={20} />
+                          </button>
+
+                          <button
+                            onClick={() => { setSelectedEvent(eve); setVista(true); }}
+                            title="Ver información"
+                            className="hover:opacity-80"
+                          >
+                            <IoEye size={20} className="text-purple-400 hover:text-violet-500 transition" />
+                          </button>
+                        </div>
+                      </td>
+                    )
+                  }
+                  {
+                    main_user === false && is_staff === false && (
+                      <td className="border border-gray-300 p-1 text-left max-w-[190px] truncate">
+                        <div className="flex justify-center items-center gap-2 sm:gap-4">
+
+                          <button onClick={() => openModalToQr(eve)}>
+                            <IoQrCode size={20} className="text-purple-950 hover:text-violet-500 transition block" />
+                          </button>
+
+                          <button onClick={() => openModalChangeEventImage(eve)}>
+                            <RiImageAddFill size={20} />
+                          </button>
+
+                          <button
+                            onClick={() => { setSelectedEvent(eve); setVista(true); }}
+                            title="Ver información"
+                            className="hover:opacity-80"
+                          >
+                            <IoEye size={20} className="text-purple-400 hover:text-violet-500 transition" />
+                          </button>
+                        </div>
+                      </td>
+                    )
+                  }
                 </tr>
               ))
             ) : (
@@ -205,7 +249,7 @@ export default function EventosClient({ initialData, initialPage, initialPageSiz
 
       {/* 🔽 Paginador */}
       {/* Paginador (usar props del SSR) */}
-      {totalPages && totalPages > 1 && (
+      {(totalPages ? totalPages : 1) > 1 && (
         <div className="flex flex-col sm:flex-row justify-between items-center mt-6 gap-4">
           <div className="text-sm text-gray-600">
             Página {initialPage} de {totalPages}

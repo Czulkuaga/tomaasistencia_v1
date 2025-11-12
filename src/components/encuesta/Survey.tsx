@@ -22,6 +22,8 @@ interface SurveyProps {
     totalPages?: number
     totalCount?: number
     initialEvent?: number | undefined
+    is_staff: boolean
+    main_user: boolean
 }
 
 type SurveyItem = {
@@ -48,7 +50,7 @@ interface EventItem {
     name: string;
 }
 
-export default function Survey({ initialData, initialPage, initialPageSize, initialSearch, totalPages, totalCount, initialEvent }: SurveyProps) {
+export default function Survey({ initialData, initialPage, initialPageSize, initialSearch, totalPages, totalCount, initialEvent, is_staff, main_user }: SurveyProps) {
 
     const router = useRouter();
     const pathname = usePathname();
@@ -147,7 +149,7 @@ export default function Survey({ initialData, initialPage, initialPageSize, init
                 name: tree?.name ?? survey.name,
                 description: tree?.description ?? "",
                 question_count: tree?.questions.length,
-                questions:questions
+                questions: questions
             });
             setIsDetailsModalOpen(true);
         } catch (e) {
@@ -180,12 +182,27 @@ export default function Survey({ initialData, initialPage, initialPageSize, init
             <p className="text-gray-500 text-sm sm:text-base">Administra y crea encuestas de manera eficiente</p>
 
             <div className='w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3'>
-                <Link href="/dashboard/surveys/create">
-                    <button className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors">
-                        <Plus className="h-4 w-4 mr-2" />
-                        Nueva Encuesta
-                    </button>
-                </Link>
+                {
+                    main_user === true && is_staff === false && (
+                        <Link href="/dashboard/surveys/create">
+                            <button className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors">
+                                <Plus className="h-4 w-4 mr-2" />
+                                Nueva Encuesta
+                            </button>
+                        </Link>
+                    )
+                }
+
+                {
+                    main_user === false && is_staff === true && (
+                        <Link href="/dashboard/surveys/create">
+                            <button className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors">
+                                <Plus className="h-4 w-4 mr-2" />
+                                Nueva Encuesta
+                            </button>
+                        </Link>
+                    )
+                }
 
                 <div className="flex items-center flex-col md:flex-row gap-2 mb-4">
                     <EventSelector
@@ -253,24 +270,65 @@ export default function Survey({ initialData, initialPage, initialPageSize, init
                                                 : "—"}
                                         </td>
                                         <td className="border border-gray-300 p-1 text-center max-w-[150px] truncate">
-                                            <div className="flex justify-center items-center gap-2 sm:gap-4">
-                                                <button
-                                                    onClick={() => handleViewSurvey(survey)}
-                                                    className="text-purple-400 hover:text-violet-500 transition block"
-                                                >
-                                                    <Eye className="h-5 w-5" />
-                                                </button>
-                                                <Link href={`/dashboard/surveys/edit/${survey.id_survey}`}>
-                                                    <button className="hover:opacity-80">
-                                                        <FaUserEdit size={20} className="text-purple-400 hover:text-violet-500 transition block" />
-                                                    </button>
-                                                </Link>
-                                                <button
-                                                    onClick={() => handleDeleteSurvey(survey.id_survey)}
-                                                >
-                                                    <MdDelete size={20} className="text-gray-400 hover:text-red-800 transition block" />
-                                                </button>
-                                            </div>
+                                            {
+                                                main_user === true && is_staff === false && (
+                                                    <div className="flex justify-center items-center gap-2 sm:gap-4">
+                                                        <button
+                                                            onClick={() => handleViewSurvey(survey)}
+                                                            className="text-purple-400 hover:text-violet-500 transition block"
+                                                        >
+                                                            <Eye className="h-5 w-5" />
+                                                        </button>
+                                                        <Link href={`/dashboard/surveys/edit/${survey.id_survey}`}>
+                                                            <button className="hover:opacity-80">
+                                                                <FaUserEdit size={20} className="text-purple-400 hover:text-violet-500 transition block" />
+                                                            </button>
+                                                        </Link>
+                                                        <button
+                                                            onClick={() => handleDeleteSurvey(survey.id_survey)}
+                                                        >
+                                                            <MdDelete size={20} className="text-gray-400 hover:text-red-800 transition block" />
+                                                        </button>
+                                                    </div>
+                                                )
+                                            }
+
+                                            {
+                                                main_user === false && is_staff === true && (
+                                                    <div className="flex justify-center items-center gap-2 sm:gap-4">
+                                                        <button
+                                                            onClick={() => handleViewSurvey(survey)}
+                                                            className="text-purple-400 hover:text-violet-500 transition block"
+                                                        >
+                                                            <Eye className="h-5 w-5" />
+                                                        </button>
+                                                        <Link href={`/dashboard/surveys/edit/${survey.id_survey}`}>
+                                                            <button className="hover:opacity-80">
+                                                                <FaUserEdit size={20} className="text-purple-400 hover:text-violet-500 transition block" />
+                                                            </button>
+                                                        </Link>
+                                                        <button
+                                                            onClick={() => handleDeleteSurvey(survey.id_survey)}
+                                                        >
+                                                            <MdDelete size={20} className="text-gray-400 hover:text-red-800 transition block" />
+                                                        </button>
+                                                    </div>
+                                                )
+                                            }
+
+                                            {
+                                                main_user === false && is_staff === false && (
+                                                    <div className="flex justify-center items-center gap-2 sm:gap-4">
+                                                        <button
+                                                            onClick={() => handleViewSurvey(survey)}
+                                                            className="text-purple-400 hover:text-violet-500 transition block"
+                                                        >
+                                                            <Eye className="h-5 w-5" />
+                                                        </button>
+                                                    </div>
+                                                )
+                                            }
+
                                         </td>
                                     </tr>
                                 ))
