@@ -183,7 +183,7 @@ export default function Survey({ initialData, initialPage, initialPageSize, init
 
             <div className='w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3'>
                 {
-                    main_user === true && is_staff === false && (
+                    main_user === true && (
                         <Link href="/dashboard/surveys/create">
                             <button className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors">
                                 <Plus className="h-4 w-4 mr-2" />
@@ -271,7 +271,7 @@ export default function Survey({ initialData, initialPage, initialPageSize, init
                                         </td>
                                         <td className="border border-gray-300 p-1 text-center max-w-[150px] truncate">
                                             {
-                                                main_user === true && is_staff === false && (
+                                                main_user === true && (
                                                     <div className="flex justify-center items-center gap-2 sm:gap-4">
                                                         <button
                                                             onClick={() => handleViewSurvey(survey)}

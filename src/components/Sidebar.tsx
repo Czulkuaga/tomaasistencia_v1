@@ -8,8 +8,6 @@ import { IoIosReturnLeft } from "react-icons/io";
 import { IoCreate } from "react-icons/io5";
 import { MdEventNote } from "react-icons/md";
 import { GrWorkshop } from "react-icons/gr";
-import { IoMdPeople } from "react-icons/io";
-import { MdQrCode2 } from "react-icons/md";
 import { MdRecordVoiceOver } from "react-icons/md";
 import { FiChevronDown, FiMenu, FiX } from "react-icons/fi";
 import { MdOutlinePlace } from "react-icons/md";
@@ -17,8 +15,16 @@ import { FaIdCardClip } from "react-icons/fa6";
 import { SiLimesurvey } from "react-icons/si";
 import { usePathname } from "next/navigation";
 import { MdAssessment } from "react-icons/md";
+import { JwtPayload } from "jsonwebtoken";
 
-export default function Sidebar({ username, fromColor = "from-violet-600", }: { username: string, fromColor?: string; }) {
+export default function Sidebar({ username, fromColor = "from-violet-600", tokendata }: { username: string, fromColor?: string; tokendata: JwtPayload | undefined; }) {
+
+  // console.log(tokendata)
+  const restrictionData = {
+    main_user:tokendata?.main_user,
+    is_staff:tokendata?.is_staff
+  }
+
   // Estados de apertura de submenús
   const [openEvento, setOpenEvento] = useState(false);
   const [openActividad, setOpenActividad] = useState(false);
@@ -30,7 +36,7 @@ export default function Sidebar({ username, fromColor = "from-violet-600", }: { 
   const [openEntregables, setOpenEntregables] = useState(false);
   const [openEncuestas, setOpenEncuestas] = useState(false);
   const [openReporte, setOpenReporte] = useState(false);
-  
+
 
   // Estado del menú móvil
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -183,15 +189,32 @@ export default function Sidebar({ username, fromColor = "from-violet-600", }: { 
                 <Link href="/dashboard/asistente" className="py-1 px-2 rounded hover:bg-purple-400 text-sm">
                   Ver asistentes
                 </Link>
-                <Link href="/dashboard/asistente/import" className="py-1 px-2 rounded hover:bg-purple-400 text-sm">
-                  Importar Excel
-                </Link>
-                  <Link href="/dashboard/qr/exportar" className="py-1 px-2 rounded hover:bg-purple-400 text-sm">
-                      Exportar QR
-                  </Link>
-                {/* <Link href="/dashboard/asistente/registro" className="py-1 px-2 rounded hover:bg-purple-400 text-sm">
-                  Registro
-                </Link> */}
+                {
+                  restrictionData.main_user === true && (
+                    <>
+                      <Link href="/dashboard/asistente/import" className="py-1 px-2 rounded hover:bg-purple-400 text-sm">
+                        Importar Excel
+                      </Link>
+                      <Link href="/dashboard/qr/exportar" className="py-1 px-2 rounded hover:bg-purple-400 text-sm">
+                        Exportar QR
+                      </Link>
+                    </>
+                  )
+                }
+
+                {
+                  restrictionData.main_user === false && restrictionData.is_staff === true && (
+                    <>
+                      <Link href="/dashboard/asistente/import" className="py-1 px-2 rounded hover:bg-purple-400 text-sm">
+                        Importar Excel
+                      </Link>
+                      <Link href="/dashboard/qr/exportar" className="py-1 px-2 rounded hover:bg-purple-400 text-sm">
+                        Exportar QR
+                      </Link>
+                    </>
+                  )
+                }
+
               </div>
             )}
           </div>
@@ -215,9 +238,9 @@ export default function Sidebar({ username, fromColor = "from-violet-600", }: { 
                 <Link href="/dashboard/surveys" className="py-1 px-2 rounded hover:bg-purple-400 text-sm">
                   Ver Encuestas
                 </Link>
-                  <Link href="/dashboard/surveys/review" className="py-1 px-2 rounded hover:bg-purple-400 text-sm">
-                      Reportes Encuestas
-                  </Link>
+                <Link href="/dashboard/surveys/review" className="py-1 px-2 rounded hover:bg-purple-400 text-sm">
+                  Reportes Encuestas
+                </Link>
 
               </div>
             )}
@@ -255,7 +278,7 @@ export default function Sidebar({ username, fromColor = "from-violet-600", }: { 
               onClick={() => setOpenReporte(!openReporte)}
               className="flex items-center py-2 px-4 rounded hover:bg-purple-400 w-full text-left"
             >
-              <MdAssessment  size={22} className="mr-2" />Reporte
+              <MdAssessment size={22} className="mr-2" />Reporte
               <FiChevronDown
                 className={`ml-auto transition-transform ${openReporte ? "rotate-180" : ""
                   }`}
@@ -264,7 +287,7 @@ export default function Sidebar({ username, fromColor = "from-violet-600", }: { 
             {openReporte && (
               <div className="ml-8 flex flex-col gap-1">
                 <Link href="/dashboard/reporteasistencia" className="py-1 px-2 rounded hover:bg-purple-400 text-sm">
-                  Reporte Asistencia 
+                  Reporte Asistencia
                 </Link>
                 <Link href="/dashboard/reports" className="py-1 px-2 rounded hover:bg-purple-400 text-sm">
                   Mas Reportes
@@ -273,8 +296,8 @@ export default function Sidebar({ username, fromColor = "from-violet-600", }: { 
             )}
           </div>
 
-          
-          
+
+
 
 
           {/* Control */}
@@ -385,51 +408,51 @@ export default function Sidebar({ username, fromColor = "from-violet-600", }: { 
             </div>
 
             {/* Stands */}
-          <div>
-            <button
-              onClick={() => setOpenStands(!openStands)}
-              className="flex items-center py-2 px-4 rounded hover:bg-purple-400 w-full text-left"
-            >
-              <MdOutlinePlace size={22} className="mr-2" /> Stands
-              <FiChevronDown
-                className={`ml-auto transition-transform ${openStands ? "rotate-180" : ""
-                  }`}
-              />
-            </button>
-            {openStands && (
-              <div className="ml-8 flex flex-col gap-1">
-                <Link href="/dashboard/stands" className="py-1 px-2 rounded hover:bg-purple-400 text-sm">
-                  Ver Stands
-                </Link>
-                {/* <Link href="/dashboard/stands/registro" className="py-1 px-2 rounded hover:bg-purple-400 text-sm">
+            <div>
+              <button
+                onClick={() => setOpenStands(!openStands)}
+                className="flex items-center py-2 px-4 rounded hover:bg-purple-400 w-full text-left"
+              >
+                <MdOutlinePlace size={22} className="mr-2" /> Stands
+                <FiChevronDown
+                  className={`ml-auto transition-transform ${openStands ? "rotate-180" : ""
+                    }`}
+                />
+              </button>
+              {openStands && (
+                <div className="ml-8 flex flex-col gap-1">
+                  <Link href="/dashboard/stands" className="py-1 px-2 rounded hover:bg-purple-400 text-sm">
+                    Ver Stands
+                  </Link>
+                  {/* <Link href="/dashboard/stands/registro" className="py-1 px-2 rounded hover:bg-purple-400 text-sm">
                   Registro
                 </Link> */}
-              </div>
-            )}
-          </div>
+                </div>
+              )}
+            </div>
 
-             {/* Entregables */}
-          <div>
-            <button
-              onClick={() => setOpenEntregables(!openEntregables)}
-              aria-expanded={openEntregables}
-              className="flex items-center py-2 px-3 rounded hover:bg-purple-400 transition-colors w-full text-left focus:outline-none focus:ring-2 focus:ring-purple-400"
-            >
-              <FaIdCardClip size={22} className="mr-2" /> Entregables
-              <FiChevronDown
-                className={`ml-auto transition-transform ${openEntregables ? "rotate-180" : ""
-                  }`}
-              />
-            </button>
+            {/* Entregables */}
+            <div>
+              <button
+                onClick={() => setOpenEntregables(!openEntregables)}
+                aria-expanded={openEntregables}
+                className="flex items-center py-2 px-3 rounded hover:bg-purple-400 transition-colors w-full text-left focus:outline-none focus:ring-2 focus:ring-purple-400"
+              >
+                <FaIdCardClip size={22} className="mr-2" /> Entregables
+                <FiChevronDown
+                  className={`ml-auto transition-transform ${openEntregables ? "rotate-180" : ""
+                    }`}
+                />
+              </button>
 
-            {openEntregables && (
-              <div className="ml-8 flex flex-col gap-1">
-                <Link href="/dashboard/entregables" className="py-1 px-2 rounded hover:bg-purple-400 text-sm">
-                  Ver Entregables
-                </Link>
-              </div>
-            )}
-          </div>
+              {openEntregables && (
+                <div className="ml-8 flex flex-col gap-1">
+                  <Link href="/dashboard/entregables" className="py-1 px-2 rounded hover:bg-purple-400 text-sm">
+                    Ver Entregables
+                  </Link>
+                </div>
+              )}
+            </div>
 
             <div>
               <button
@@ -447,9 +470,9 @@ export default function Sidebar({ username, fromColor = "from-violet-600", }: { 
                   <Link href="/dashboard/asistente" className="py-1 px-2 rounded hover:bg-purple-300 text-sm">
                     Ver asistentes
                   </Link>
-                    <Link href="/dashboard/qr/exportar" className="py-1 px-2 rounded hover:bg-purple-400 text-sm">
-                        Exportar
-                    </Link>
+                  <Link href="/dashboard/qr/exportar" className="py-1 px-2 rounded hover:bg-purple-400 text-sm">
+                    Exportar
+                  </Link>
                   {/* <Link href="/dashboard/asistente/registro" className="py-1 px-2 rounded hover:bg-purple-300 text-sm">
                     Registro
                   </Link> */}
@@ -457,35 +480,35 @@ export default function Sidebar({ username, fromColor = "from-violet-600", }: { 
               )}
             </div>
 
-                        {/* Encuestas */}
-          <div>
-            <button
-              onClick={() => setOpenEncuestas(!openEncuestas)}
-              aria-expanded={openEncuestas}
-              className="flex items-center py-2 px-3 rounded hover:bg-purple-400 transition-colors w-full text-left focus:outline-none focus:ring-2 focus:ring-purple-400"
-            >
-              <SiLimesurvey size={22} className="mr-2" /> Encuestas
-              <FiChevronDown
-                className={`ml-auto transition-transform ${openEncuestas ? "rotate-180" : ""
-                  }`}
-              />
-            </button>
+            {/* Encuestas */}
+            <div>
+              <button
+                onClick={() => setOpenEncuestas(!openEncuestas)}
+                aria-expanded={openEncuestas}
+                className="flex items-center py-2 px-3 rounded hover:bg-purple-400 transition-colors w-full text-left focus:outline-none focus:ring-2 focus:ring-purple-400"
+              >
+                <SiLimesurvey size={22} className="mr-2" /> Encuestas
+                <FiChevronDown
+                  className={`ml-auto transition-transform ${openEncuestas ? "rotate-180" : ""
+                    }`}
+                />
+              </button>
 
-            {openEncuestas && (
-              <div className="ml-8 flex flex-col gap-1">
-                <Link href="/dashboard/surveys" className="py-1 px-2 rounded hover:bg-purple-400 text-sm">
-                  Ver Encuestas
-                </Link>
+              {openEncuestas && (
+                <div className="ml-8 flex flex-col gap-1">
+                  <Link href="/dashboard/surveys" className="py-1 px-2 rounded hover:bg-purple-400 text-sm">
+                    Ver Encuestas
+                  </Link>
                   <Link href="/dashboard/surveys/review" className="py-1 px-2 rounded hover:bg-purple-400 text-sm">
-                      Reportes Encuestas
+                    Reportes Encuestas
                   </Link>
 
-              </div>
-            )}
-          </div>
+                </div>
+              )}
+            </div>
 
 
-              {/* 
+            {/* 
             <div>
               <button
                 onClick={() => setOpenAsistencia(!openAsistencia)}
@@ -512,28 +535,28 @@ export default function Sidebar({ username, fromColor = "from-violet-600", }: { 
 
             {/* Reporte */}
 
-          <div>
-            <button
-              onClick={() => setOpenReporte(!openReporte)}
-              className="flex items-center py-2 px-4 rounded hover:bg-purple-400 w-full text-left"
-            >
-              <MdAssessment  size={22} className="mr-2" />Reporte
-              <FiChevronDown
-                className={`ml-auto transition-transform ${openReporte ? "rotate-180" : ""
-                  }`}
-              />
-            </button>
-            {openReporte && (
-              <div className="ml-8 flex flex-col gap-1">
-                <Link href="/dashboard/reporteasistencia" className="py-1 px-2 rounded hover:bg-purple-400 text-sm">
-                  Reporte Asistencia 
-                </Link>
-                <Link href="/dashboard/reports" className="py-1 px-2 rounded hover:bg-purple-400 text-sm">
-                  Mas Reporte
-                </Link>
-              </div>
-            )}
-          </div>
+            <div>
+              <button
+                onClick={() => setOpenReporte(!openReporte)}
+                className="flex items-center py-2 px-4 rounded hover:bg-purple-400 w-full text-left"
+              >
+                <MdAssessment size={22} className="mr-2" />Reporte
+                <FiChevronDown
+                  className={`ml-auto transition-transform ${openReporte ? "rotate-180" : ""
+                    }`}
+                />
+              </button>
+              {openReporte && (
+                <div className="ml-8 flex flex-col gap-1">
+                  <Link href="/dashboard/reporteasistencia" className="py-1 px-2 rounded hover:bg-purple-400 text-sm">
+                    Reporte Asistencia
+                  </Link>
+                  <Link href="/dashboard/reports" className="py-1 px-2 rounded hover:bg-purple-400 text-sm">
+                    Mas Reporte
+                  </Link>
+                </div>
+              )}
+            </div>
 
             <div>
               <button
@@ -558,8 +581,8 @@ export default function Sidebar({ username, fromColor = "from-violet-600", }: { 
                     Control Entregables
                   </Link>
                   <Link href="/dashboard/controlsurveys" className="py-1 px-2 rounded hover:bg-purple-400 text-sm">
-                  Control Encuesta
-                </Link>
+                    Control Encuesta
+                  </Link>
                   {/* <Link href="/dashboard/control/registro" className="py-1 px-2 rounded hover:bg-purple-300 text-sm">
                     Registro
                   </Link> */}

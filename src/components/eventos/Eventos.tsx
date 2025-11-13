@@ -223,10 +223,6 @@ export default function EventosClient({ initialData, initialPage, initialPageSiz
                             <IoQrCode size={20} className="text-purple-950 hover:text-violet-500 transition block" />
                           </button>
 
-                          <button onClick={() => openModalChangeEventImage(eve)}>
-                            <RiImageAddFill size={20} />
-                          </button>
-
                           <button
                             onClick={() => { setSelectedEvent(eve); setVista(true); }}
                             title="Ver información"

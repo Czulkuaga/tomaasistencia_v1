@@ -203,7 +203,7 @@ export default function Asisten({ initialData, initialPage, initialPageSize, ini
 
         <div className='w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3'>
           {
-            main_user === true && is_staff === false && (
+            main_user === true && (
               <div className='flex flex-col gap-4 md:flex-row'>
                 <button
                   className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-400 text-md font-bold"

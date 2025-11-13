@@ -32,8 +32,6 @@ export default async function DashboardLayout({
   const tokedata = await dToken(token)
   const username = tokedata?.username || "Usuario";
 
-
-  
   //const envUrl = process.env.NEXT_PUBLIC_SERVER_URL || "";
   const environment = (process.env.ENVIRONMENT || "").toUpperCase();
   const isQA = environment === "QA";
@@ -44,7 +42,7 @@ export default async function DashboardLayout({
   return (
     <main className="flex bg-zinc-50 min-h-screen font-sans overflow-x-hidden">
 
-       <Sidebar username={username} fromColor={fromColor} />
+       <Sidebar username={username} fromColor={fromColor} tokendata={tokedata}/>
       {/* Contenedor del contenido */}
       <div className="flex-1 md:ml-50 px-4 sm:px-6 lg:px-8 py-6">
         {children}

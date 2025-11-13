@@ -205,7 +205,7 @@ export default function Stands({ initialData, initialPage, initialPageSize, init
 
                 <div className='w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3'>
                     {
-                        main_user === true && is_staff === false && (
+                        main_user === true && (
                             <button
                                 className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-400 text-md font-bold"
                                 onClick={() => setIsCreateProdu(true)}
@@ -294,7 +294,7 @@ export default function Stands({ initialData, initialPage, initialPageSize, init
                                     <td className="border border-gray-300 p-1 text-left max-w-[150px] truncate">{stad.location}</td>
                                     <td className="border border-gray-300 p-1 text-left max-w-[150px] truncate">{stad.is_active ? "Sí" : "No"}</td>
                                     {
-                                        main_user === true && is_staff === false && (
+                                        main_user === true && (
                                             <td className="border border-gray-300 p-1 text-center max-w-[150px] truncate">
 
                                                 <div className="flex justify-center items-center gap-2 sm:gap-4">
